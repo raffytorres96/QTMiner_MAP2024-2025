@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/Progetto Map Versione Base A.A. 2024-2025/QTClient/QTClient.iml" filepath="$PROJECT_DIR$/Progetto Map Versione Base A.A. 2024-2025/QTClient/QTClient.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/QTMiner_MAP2024-2025.iml" filepath="$PROJECT_DIR$/.idea/QTMiner_MAP2024-2025.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Progetto Map Versione Base A.A. 2024-2025/QTServer/QTServer.iml" filepath="$PROJECT_DIR$/Progetto Map Versione Base A.A. 2024-2025/QTServer/QTServer.iml" />
+    </modules>
+  </component>
+</project>
