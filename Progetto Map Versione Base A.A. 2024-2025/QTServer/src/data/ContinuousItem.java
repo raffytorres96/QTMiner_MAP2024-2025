@@ -1,5 +1,8 @@
 package data;
 
+/**
+ * Rappresenta un item continuo caratterizzato da un valore numerico.
+ */
 public class ContinuousItem extends Item {
 
      /**
