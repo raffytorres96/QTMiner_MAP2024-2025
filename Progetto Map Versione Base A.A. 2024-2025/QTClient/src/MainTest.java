@@ -56,8 +56,9 @@ public class MainTest {
     String result = (String)in.readObject();
     if(result.equals("OK"))
         return (String)in.readObject();
-    else throw new ServerException(result);
-		
+    else {
+		throw new ServerException(result);
+		}
 	}
 	private void storeTableFromDb() throws SocketException,ServerException,IOException,ClassNotFoundException{
 		out.writeObject(0);
