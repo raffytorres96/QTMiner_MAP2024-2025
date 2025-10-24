@@ -34,10 +34,11 @@ public class MainTest {
 		int answer;
 		
 		do{
+			System.out.println("\nScegli una opzione:");
 			System.out.println("(1) Load clusters from file");
 			System.out.println("(2) Load data from db");
 			System.out.print("(1/2):");
-			answer=Keyboard.readInt();
+			answer = Keyboard.readInt();
 		}
 		while(answer<=0 || answer>2);
 		return answer;
@@ -47,11 +48,9 @@ public class MainTest {
 	private String learningFromFile() throws SocketException,ServerException,IOException,ClassNotFoundException{
     out.writeObject(3);
     
-    System.out.print("File Name:"); // Cambiato da "Table Name"
+    System.out.print("Nome del file:"); // Cambiato da "Table Name"
     String fileName=Keyboard.readString(); // Cambiato da tabName
     out.writeObject(fileName);
-    
-    // Rimosso completamente radius - non serve per caricare cluster esistenti
     
     String result = (String)in.readObject();
     if(result.equals("OK"))
@@ -62,9 +61,10 @@ public class MainTest {
 	}
 	private void storeTableFromDb() throws SocketException,ServerException,IOException,ClassNotFoundException{
 		out.writeObject(0);
-		System.out.print("Table name:");
+		System.out.print("Nome della tabella:");
 		String tabName=Keyboard.readString();
 		out.writeObject(tabName);
+		
 		String result = (String)in.readObject();
 		if(!result.equals("OK"))
 			throw new ServerException(result);
@@ -74,18 +74,19 @@ public class MainTest {
 		out.writeObject(1);
 		double r=1.0;
 		do{
-			System.out.print("Radius:");
+			System.out.print("Inserisci raggio:");
 			r=Keyboard.readDouble();
 		} while(r<=0);
 		out.writeObject(r);
+
 		String result = (String)in.readObject();
 		if(result.equals("OK")){
-			System.out.println("Number of Clusters:"+in.readObject());
+			System.out.println("Numero cluster:"+in.readObject());
 			return (String)in.readObject();
 		}
-		else throw new ServerException(result);
-		
-		
+			else {
+				throw new ServerException(result);
+			}
 	}
 	
 	private void storeClusterInFile() throws SocketException,ServerException,IOException,ClassNotFoundException{
@@ -100,9 +101,8 @@ public class MainTest {
 	public static void main(String[] args) {
 		String ip=args[0];
         int port=new Integer(args[1]).intValue();
-
-
 		MainTest main=null;
+		
 		try{
 			main=new MainTest(ip,port);
 		}
@@ -221,16 +221,16 @@ public class MainTest {
 						catch (ServerException e) {
 							System.out.println(e.getMessage());
 						}
-						System.out.print("Would you repeat?(y/n)");
+						System.out.print("Vuoi ripetere l'operazione? (y/n)");
 						answer=Keyboard.readChar();
 					}
 					while(Character.toLowerCase(answer)=='y');
 					break; //fine case 2
 					default:
-					System.out.println("Invalid option!");
+					System.out.println("Opzione non valida!");
 			}
 			
-			System.out.print("would you choose a new operation from menu?(y/n)");
+			System.out.print("Vuoi scegliere una nuova operazione dal menu?(y/n)");
 			if(Keyboard.readChar()!='y')
 				break;
 			}
