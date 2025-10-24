@@ -6,10 +6,17 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 
-
 import keyboardinput.Keyboard;
 
-
+/**
+ * Classe client per l'interazione con un server di clustering.
+ * Gestisce la comunicazione tramite socket e permette di eseguire operazioni
+ * di clustering come il caricamento di dati da database remoto, il salvataggio di cluster
+ * su file e il caricamento di cluster esistenti.
+ * 
+ * @author [Raffaele Gatta]
+ * @version 1.0
+ */
 
 public class MainTest {
 
@@ -19,6 +26,14 @@ public class MainTest {
 	private ObjectOutputStream out;
 	private ObjectInputStream in ; // stream con richieste del client
 	
+	/**
+	 * Costruttore che inizializza la connessione con il server.
+	 * Crea un socket e configura gli stream di input/output per la comunicazione.
+	 * 
+	 * @param ip Indirizzo IP del server a cui connettersi
+	 * @param port Numero di porta su cui il server è in ascolto
+	 * @throws IOException se si verifica un errore durante la connessione o l'inizializzazione degli stream
+	 */
 	
 	public MainTest(String ip, int port) throws IOException{
 		InetAddress addr = InetAddress.getByName(ip); //ip
@@ -30,6 +45,17 @@ public class MainTest {
 		in = new ObjectInputStream(socket.getInputStream());	; // stream con richieste del client
 	}
 	
+	/**
+	 * Visualizza il menu principale e legge la scelta dell'utente.
+	 * Le opzioni disponibili sono:
+	 * <ul>
+	 *   <li>1 - Carica cluster da file</li>
+	 *   <li>2 - Carica dati da database</li>
+	 * </ul>
+	 * 
+	 * @return la scelta dell'utente (1 o 2)
+	 */
+
 	private int menu(){
 		int answer;
 		
@@ -41,10 +67,20 @@ public class MainTest {
 			answer = Keyboard.readInt();
 		}
 		while(answer<=0 || answer>2);
-		return answer;
-		
+		return answer;		
 	}
 	
+	/**
+	 * Carica cluster precedentemente salvati da un file.
+	 * Invia al server il comando 3 seguito dal nome del file da cui caricare i cluster.
+	 * 
+	 * @return una stringa contenente la rappresentazione dei cluster caricati
+	 * @throws SocketException se si verifica un errore nel socket
+	 * @throws ServerException se il server restituisce un errore
+	 * @throws IOException se si verifica un errore di I/O
+	 * @throws ClassNotFoundException se la classe dell'oggetto ricevuto non viene trovata
+	 */
+
 	private String learningFromFile() throws SocketException,ServerException,IOException,ClassNotFoundException{
     out.writeObject(3);
     
@@ -59,6 +95,8 @@ public class MainTest {
 		throw new ServerException(result);
 		}
 	}
+
+	
 	private void storeTableFromDb() throws SocketException,ServerException,IOException,ClassNotFoundException{
 		out.writeObject(0);
 		System.out.print("Nome della tabella:");
