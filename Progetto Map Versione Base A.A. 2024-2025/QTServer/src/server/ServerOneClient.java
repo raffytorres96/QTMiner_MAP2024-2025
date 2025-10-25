@@ -180,7 +180,7 @@ public class ServerOneClient extends Thread {
             String fileName = "clusters_" + System.currentTimeMillis();
             
             // Utilizza il metodo salva() di QTMiner per serializzare i cluster
-            kmeans.salva(fileName);
+            kmeans.salva(fileName + ".dmp");
             
             out.writeObject("OK");
             out.flush();
@@ -253,8 +253,10 @@ private void handleLearningFromFile() {
         }
         
         // Carica i cluster dal file usando il costruttore
-        this.kmeans = new QTMiner(fileName + ".dmp"); // Aggiungi estensione .dmp
-        
+            if (!fileName.endsWith(".dmp")) {
+                fileName = fileName + ".dmp";
+            }
+            this.kmeans = new QTMiner(fileName);     
         // Invia la risposta al client
         out.writeObject("OK");
         out.flush();

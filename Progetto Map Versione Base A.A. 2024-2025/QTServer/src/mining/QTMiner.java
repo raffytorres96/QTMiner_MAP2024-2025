@@ -146,7 +146,7 @@ public class QTMiner implements Serializable {
         while (it.hasNext()) {
             Tuple t = it.next();
             for (int i = 0; i < data.getNumberOfExamples(); i++) {
-                if (!isClustered[i] && data.getItemSet(i).equals(t)) {
+                if (!isClustered[i] && data.getItemSet(i).getDistance(t) == 0.0) {
                     isClustered[i] = true;
                     countClustered++;
                     break;
