@@ -59,14 +59,12 @@ public class MainTest {
 	private int menu(){
 		int answer;
 		
-		do{
 			System.out.println("\nScegli una opzione:");
 			System.out.println("(1) Load clusters from file");
 			System.out.println("(2) Load data from db");
 			System.out.print("(1/2):");
 			answer = Keyboard.readInt();
-		}
-		while(answer<=0 || answer>2);
+			
 		return answer;		
 	}
 	
@@ -105,9 +103,9 @@ public class MainTest {
 		
 		String result = (String)in.readObject();
 		if(!result.equals("OK"))
-			throw new ServerException(result);
-		
+			throw new ServerException(result);	
 	}
+	
 	private String learningFromDbTable() throws SocketException,ServerException,IOException,ClassNotFoundException{
 		out.writeObject(1);
 		double r=1.0;
