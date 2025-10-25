@@ -135,6 +135,9 @@ public class MainTest {
                 
             } catch(ClusteringRadiusException e) {
                 System.out.println(e.getMessage());
+            } catch(EmptyDatasetException e) {
+                System.out.println("Dataset vuoto durante il clustering: " + e.getMessage());
+                break;
             }
         }
     }
