@@ -12,7 +12,7 @@ public class DbAccess {
     private final String DBMS = "jdbc:mysql";
     private final String SERVER = "localhost";
     private final String DATABASE = "MapDB";
-    private final int PORT = 3306;
+    private final String PORT = "3306";
     private final String USER_ID = "MapUser";
     private final String PASSWORD = "map";
     private Connection conn;
