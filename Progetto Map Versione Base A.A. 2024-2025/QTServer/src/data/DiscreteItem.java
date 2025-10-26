@@ -24,7 +24,7 @@ public class DiscreteItem extends Item {
      * @param attribute l'attributo discreto associato all'item (deve essere un'istanza di {@link DiscreteAttribute})
      * @param value il valore simbolico (stringa) dell'item
      */
-    DiscreteItem(DiscreteAttribute attribute, String value) {
+    public DiscreteItem(DiscreteAttribute attribute, String value) {
         super(attribute, value);
     }
 

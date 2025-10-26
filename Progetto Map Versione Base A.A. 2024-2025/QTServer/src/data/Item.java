@@ -23,7 +23,7 @@ import java.io.Serializable;
  * @see DiscreteItem
  * @see Attribute
  */
-abstract class Item implements Serializable {
+public abstract class Item implements Serializable {
     
     /**
      * Attributo associato all'item.

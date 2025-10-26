@@ -103,6 +103,13 @@ public class Data {
                     double min = ((Number) minVal).doubleValue();
                     double max = ((Number) maxVal).doubleValue();
                     
+                    if (minVal instanceof Number && maxVal instanceof Number) {
+                        min = ((Number) minVal).doubleValue();
+                        max = ((Number) maxVal).doubleValue();
+                    } else {
+                        throw new NoValueException("Valori MIN/MAX non numerici per la colonna " + column.getColumnName());
+                    }
+
                     attributeSet.add(new ContinuousAttribute(column.getColumnName(), i, min, max));
                 } else {
                     // Attributo discreto - carica i valori distinti
@@ -177,7 +184,7 @@ public class Data {
      * 
      * @return un array di oggetti {@link Attribute} che rappresentano lo schema del dataset
      */
-    Attribute[] getAttributeSchema() {
+    public Attribute[] getAttributeSchema() {
         return attributeSet.toArray(new Attribute[0]);
     }
     

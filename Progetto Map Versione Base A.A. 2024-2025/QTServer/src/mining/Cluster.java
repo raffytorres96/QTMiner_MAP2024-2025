@@ -39,11 +39,7 @@ public class Cluster implements Iterable<Tuple>, Comparable<Cluster>, Serializab
 	 * L'uso di {@link HashSet} garantisce l'unicità delle tuple all'interno del cluster
 	 * e operazioni di inserimento e ricerca efficienti in tempo O(1) medio.
 	 */
-	private Set<Tuple> clusteredData; 
-	
-	/*Cluster(){
-	
-	}*/
+	private Set<Tuple> clusteredData;
 
 	/**
 	 * Costruisce un nuovo cluster con il centroide specificato.
@@ -54,8 +50,12 @@ public class Cluster implements Iterable<Tuple>, Comparable<Cluster>, Serializab
 	 * 
 	 * @param centroid la tupla che rappresenta il centroide del nuovo cluster.
 	 *                 Non può essere {@code null}.
+	 * @throws NullPointerException se centroid è null
 	 */
 	public Cluster(Tuple centroid){
+		if (centroid == null) {
+			throw new NullPointerException("Centroid cannot be null");
+		}
 		this.centroid = centroid;
 		this.clusteredData = new HashSet<>();
 		
@@ -66,7 +66,7 @@ public class Cluster implements Iterable<Tuple>, Comparable<Cluster>, Serializab
 	 * 
 	 * @return la tupla che rappresenta il centroide del cluster.
 	 */		
-	public Tuple getCentroid(){
+	Tuple getCentroid(){
 		return centroid;
 	}
 	
@@ -92,7 +92,7 @@ public class Cluster implements Iterable<Tuple>, Comparable<Cluster>, Serializab
 	 * @return {@code true} se la tupla è presente nell'insieme dei dati clusterizzati,
 	 *         {@code false} altrimenti.
 	 */
-	public boolean contain(Tuple tuple){
+	private boolean contain(Tuple tuple){
 		return clusteredData.contains(tuple);
 	}
 
@@ -106,7 +106,7 @@ public class Cluster implements Iterable<Tuple>, Comparable<Cluster>, Serializab
 	 * @param tuple la tupla da rimuovere dal cluster. Se la tupla non è presente,
 	 *              l'operazione non ha effetto.
 	 */
-	public void removeTuple(Tuple tuple){
+	private void removeTuple(Tuple tuple){
 		clusteredData.remove(tuple);
 		
 	}
@@ -120,7 +120,7 @@ public class Cluster implements Iterable<Tuple>, Comparable<Cluster>, Serializab
 	 * 
 	 * @return la dimensione del cluster (numero di tuple contenute).
 	 */
-	public int getSize(){
+	int getSize(){
 		return clusteredData.size();
 	}
 
@@ -138,27 +138,59 @@ public class Cluster implements Iterable<Tuple>, Comparable<Cluster>, Serializab
 	}
 
 	/**
-	 * Compara questo cluster con un altro cluster in base alla loro dimensione.
+	 * Compara questo cluster con un altro cluster.
 	 * <p>
-	 * Un cluster è considerato "maggiore" se contiene più tuple. Questo metodo
-	 * è utilizzato per ordinare cluster in strutture dati come {@link TreeSet}.
+	 * Il confronto avviene in due fasi:
+	 * <ol>
+	 *   <li><b>Confronto per dimensione</b>: Il cluster con più tuple è considerato "maggiore"</li>
+	 *   <li><b>Confronto lessicografico sui centroidi</b>: Se le dimensioni sono uguali,
+	 *       si confrontano i valori degli attributi dei centroidi, attributo per attributo</li>
+	 * </ol>
 	 * </p>
 	 * <p>
-	 * <b>Nota:</b> Questo metodo restituisce sempre -1 o 1, mai 0, anche quando
-	 * i cluster hanno la stessa dimensione. Questo comportamento evita che cluster
-	 * con la stessa dimensione vengano considerati "uguali" e quindi uno dei due
-	 * venga scartato da strutture dati basate su {@link Set}.
+	 * Questo metodo garantisce:
+	 * <ul>
+	 *   <li>Un ordinamento totale dei cluster</li>
+	 *   <li>Consistenza con {@code equals} (assumendo che equals sia implementato correttamente)</li>
+	 *   <li>Comportamento corretto in strutture dati ordinate come {@link TreeSet}</li>
+	 * </ul>
+	 * </p>
+	 * <p>
+	 * <b>Nota:</b> Il metodo rispetta il contratto di {@link Comparable}, restituendo
+	 * 0 quando i cluster hanno la stessa dimensione e centroidi identici.
 	 * </p>
 	 * 
 	 * @param o l'oggetto {@code Cluster} con cui confrontare.
-	 * @return un valore negativo (-1) se questo cluster è più piccolo dell'altro,
-	 *         un valore positivo (1) se questo cluster è più grande o uguale all'altro.
+	 * @return un valore negativo se questo cluster è "minore" dell'altro,
+	 *         zero se i cluster sono uguali in dimensione e centroide,
+	 *         un valore positivo se questo cluster è "maggiore" dell'altro.
+	 * @throws NullPointerException se o è null
 	 */
 	public int compareTo(Cluster o) {
-    		if (this.getSize() < o.getSize())
-        		return -1;
-    		else
-        		return 1;
+		if (o == null) {
+			throw new NullPointerException("Cannot compare to null cluster");
+		}
+		
+		// Prima fase: confronto per dimensione
+		int sizeComparison = Integer.compare(this.getSize(), o.getSize());
+		if (sizeComparison != 0) {
+			return sizeComparison;
+		}
+		
+		// Seconda fase: confronto lessicografico sui centroidi
+		for (int i = 0; i < centroid.getLength(); i++) {
+			Object thisValue = this.centroid.get(i);
+			Object otherValue = o.centroid.get(i);
+			
+			// Confronto basato sulla rappresentazione testuale
+			int valueComparison = thisValue.toString().compareTo(otherValue.toString());
+			if (valueComparison != 0) {
+				return valueComparison;
+			}
+		}
+		
+		// I cluster hanno stessa dimensione e centroidi identici
+		return 0;
 	}
 	
 	/**

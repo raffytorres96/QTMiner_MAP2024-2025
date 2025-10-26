@@ -16,17 +16,17 @@ import java.io.Serializable;
  * @see ContinuousAttribute
  * @see DiscreteAttribute
  */
-abstract class Attribute implements Serializable {
+public abstract class Attribute implements Serializable {
 
     /**
      * Nome dell'attributo.
      */
-    public String name;
+    private String name;
     
     /**
      * Indice della posizione dell'attributo nello schema del dataset.
      */
-    public int index;
+    private int index;
 
     /**
      * Costruisce una nuova istanza della classe Attribute.
@@ -35,7 +35,7 @@ abstract class Attribute implements Serializable {
      * @param name il nome identificativo dell'attributo
      * @param index la posizione dell'attributo nello schema (parte da 0)
      */
-    public Attribute(String name, int index) {
+    protected Attribute(String name, int index) {
         this.name = name;
         this.index = index;
     }

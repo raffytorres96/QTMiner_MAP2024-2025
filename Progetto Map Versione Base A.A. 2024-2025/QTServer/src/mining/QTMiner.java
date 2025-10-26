@@ -312,7 +312,7 @@ public class QTMiner implements Serializable {
      * @see Cluster#addData(Tuple)
      * @see Tuple#getDistance(Tuple)
      */
-    public Cluster buildCandidateCluster(Data data, boolean[] isClustered){
+    private Cluster buildCandidateCluster(Data data, boolean[] isClustered){
         Cluster bestCluster = null;
         int maxSize = -1;
 

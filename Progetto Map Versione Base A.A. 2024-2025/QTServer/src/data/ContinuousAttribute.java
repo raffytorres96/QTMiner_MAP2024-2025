@@ -54,7 +54,7 @@ public class ContinuousAttribute extends Attribute {
      *         e 1 corrisponde a max
      * @throws ArithmeticException se max = min (divisione per zero)
      */
-    public double getScaledValue(double v) {
+    protected double getScaledValue(double v) {
         return (v - min) / (max - min);
     }
 }
