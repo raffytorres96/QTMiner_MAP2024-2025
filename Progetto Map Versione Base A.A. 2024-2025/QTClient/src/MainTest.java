@@ -80,17 +80,18 @@ public class MainTest {
 	 */
 
 	private String learningFromFile() throws SocketException,ServerException,IOException,ClassNotFoundException{
-    out.writeObject(3);
-    
-    System.out.print("Nome del file:"); // Cambiato da "Table Name"
-    String fileName=Keyboard.readString(); // Cambiato da tabName
-    out.writeObject(fileName);
-    
-    String result = (String)in.readObject();
-    if(result.equals("OK"))
-        return (String)in.readObject();
-    else {
-		throw new ServerException(result);
+		out.writeObject(3);
+		
+		System.out.print("Nome del file (senza estensione): ");
+		String fileName=Keyboard.readString() + ".dmp";
+		
+		out.writeObject(fileName);
+		
+		String result = (String)in.readObject();
+		if(result.equals("OK"))
+			return (String)in.readObject();
+		else {
+			throw new ServerException(result);
 		}
 	}
 
@@ -126,14 +127,28 @@ public class MainTest {
 	}
 	
 	private void storeClusterInFile() throws SocketException,ServerException,IOException,ClassNotFoundException{
-		out.writeObject(2);
-		
-		
-		String result = (String)in.readObject();
-		if(!result.equals("OK"))
-			 throw new ServerException(result);
-		
+	out.writeObject(2);
+	
+	System.out.print("Vuoi specificare il nome del file? (y/n): ");
+	char choice = Keyboard.readChar();
+	
+	String fileName;
+	if(Character.toLowerCase(choice) == 'y') {
+		System.out.print("Nome del file (senza estensione): ");
+		fileName = Keyboard.readString() + ".dmp";
+	} else {
+		fileName = "clusters_" + System.currentTimeMillis() + ".dmp";
 	}
+	
+	out.writeObject(fileName);
+	
+	String result = (String)in.readObject();
+	if(!result.equals("OK"))
+		 throw new ServerException(result);
+	else
+		System.out.println("Cluster salvati nel file: " + fileName);
+	}
+
 	public static void main(String[] args) {
 		String ip=args[0];
         int port=new Integer(args[1]).intValue();

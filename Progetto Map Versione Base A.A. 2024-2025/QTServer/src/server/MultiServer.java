@@ -13,19 +13,6 @@ public class MultiServer {
         run();
     }
 
-    /*public void run(){
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            while(true){
-                Socket clientSocket = serverSocket.accept();
-                System.out.println("Nuova connessione da " + clientSocket.getInetAddress());
-
-                new ServerOneClient(clientSocket);
-            }
-        } catch (IOException e) {
-            System.out.println("Errore nel server: " + e.getMessage());
-        }
-    }*/
-
     public void run() {
         ServerSocket serverSocket = null;
         

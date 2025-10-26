@@ -1,168 +1,182 @@
 package server;
 
-import data.Data;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.sql.SQLException;
+
+import data.Data;
+import data.EmptyDatasetException;
+import database.DatabaseConnectionException;
+import database.EmptySetException;
+import mining.ClusteringRadiusException;
 import mining.QTMiner;
 
 /**
- * Classe ServerOneClient che estende Thread per gestire 
- * le richieste di un singolo client in modo concorrente
+ * Classe che gestisce la comunicazione con un singolo client in un thread separato.
+ * Estende Thread per permettere la gestione concorrente di più client.
+ *
  */
 public class ServerOneClient extends Thread {
     
-    /**
-     * Socket di connessione con il client
-     */
     private Socket socket;
-    
-    /**
-     * Stream di input per ricevere oggetti dal client
-     */
     private ObjectInputStream in;
-    
-    /**
-     * Stream di output per inviare oggetti al client
-     */
     private ObjectOutputStream out;
-    
-    /**
-     * Istanza di QTMiner per l'esecuzione del clustering
-     */
     private QTMiner kmeans;
+    private Data data;
     
     /**
-     * Dati caricati dal database per il clustering
-     */
-    private Data data;
-
-    /**
-     * Costruttore di classe
-     * Inizializza gli attributi socket, in e out. Avvia il thread.
-     * @param s Socket di connessione con il client
-     * @throws IOException se si verifica un errore nell'inizializzazione degli stream
+     * Costruttore di classe. Inizializza gli attributi socket, in e out. Avvia il thread.
+     * 
+     * @param s Socket connesso al client
+     * @throws IOException se si verifica un errore durante l'inizializzazione degli stream
      */
     public ServerOneClient(Socket s) throws IOException {
         this.socket = s;
-        
-        // Inizializzazione degli stream di comunicazione
-        // IMPORTANTE: ObjectOutputStream deve essere creato prima di ObjectInputStream
         this.out = new ObjectOutputStream(socket.getOutputStream());
         this.in = new ObjectInputStream(socket.getInputStream());
-        
-        System.out.println("Client connesso: " + socket.getInetAddress().getHostAddress());
         
         // Avvia il thread
         start();
     }
-
+    
     /**
-     * Riscrive il metodo run della superclasse Thread 
-     * al fine di gestire le richieste del client
+     * Riscrive il metodo run della superclasse Thread al fine di gestire le richieste del client.
+     * Rimane in ascolto dei comandi inviati dal client e li elabora di conseguenza.
      */
     @Override
     public void run() {
         try {
             while (true) {
-                // Leggi il codice operazione dal client
-                int operation = (Integer) in.readObject();
+                // Leggi il comando dal client
+                int command = (int) in.readObject();
                 
-                switch (operation) {
-                    case 0: // storeTableFromDb
+                switch (command) {
+                    case 0:
                         handleStoreTableFromDb();
                         break;
-                        
-                    case 1: // learningFromDbTable
+                    case 1:
                         handleLearningFromDbTable();
                         break;
-                        
-                    case 2: // storeClusterInFile
+                    case 2:
                         handleStoreClusterInFile();
                         break;
-                        
-                    case 3: // learningFromFile
+                    case 3:
                         handleLearningFromFile();
                         break;
-                        
                     default:
-                        out.writeObject("ERROR: Invalid operation code");
+                        out.writeObject("Comando non valido!");
                         out.flush();
-                        break;
                 }
             }
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Client disconnesso: " + socket.getInetAddress().getHostAddress());
-        } finally {
-            closeConnection();
-        }
+            } catch (IOException | ClassNotFoundException e) {
+                // Nessun messaggio - gestione silenziosa
+            } finally {
+                // Chiusura risorse
+                closeConnection();
+            }
     }
     
     /**
      * Gestisce il comando 0: caricamento tabella dal database
      */
     private void handleStoreTableFromDb() {
-        try {
-            // Leggi il nome della tabella dal client
-            String tableName = (String) in.readObject();
-            System.out.println("Caricamento tabella: " + tableName);
-            
-            // Carica i dati dalla tabella del database
-            this.data = new Data(tableName);
-            
-            // Conferma il caricamento
-            out.writeObject("OK");
-            out.flush();
-            System.out.println("Tabella " + tableName + " caricata con successo");
-            
-        } catch (Exception e) {
+        String tableName = null;
             try {
-                out.writeObject("ERROR: " + e.getMessage());
+                // Leggi il nome della tabella dal client
+                tableName = (String) in.readObject();
+                System.out.println("Caricamento tabella: " + tableName);
+                
+                // Valida l'input
+                if (tableName == null || tableName.trim().isEmpty()) {
+                    throw new IllegalArgumentException("Nome tabella non valido");
+                }
+                
+                // Carica i dati dalla tabella del database
+                Data newData = new Data(tableName);
+                
+                // Aggiorna lo stato solo se il caricamento ha successo
+                this.data = newData;
+                
+                // Conferma il caricamento
+                out.writeObject("OK");
                 out.flush();
-            } catch (IOException ioException) {
-                System.err.println("Errore nell'invio del messaggio di errore: " + ioException.getMessage());
-            }
-            System.err.println("Errore nel caricamento della tabella: " + e.getMessage());
+                System.out.println("Tabella " + tableName + " caricata con successo (" + 
+                                data.getNumberOfExamples() + " esempi)");
+                
+        } catch (ClassNotFoundException | IOException | EmptyDatasetException | 
+                    SQLException | DatabaseConnectionException | EmptySetException | 
+                    IllegalArgumentException e) {
+                System.err.println("Errore nel caricamento della tabella: " + e.getMessage());
+                
+                try {
+                    String errorMsg = "Errore: ";
+                    if (e instanceof SQLException) {
+                        errorMsg += "Tabella non trovata o non valida nel database. Verifica che il nome sia corretto.";
+                    } else {
+                        errorMsg += e.getMessage();
+                    }
+                    out.writeObject(errorMsg);
+                    out.flush();
+                } catch (IOException ioException) {
+                    System.err.println("Errore critico: impossibile comunicare con il client");
+                    ioException.printStackTrace();
+                }
         }
     }
-    
-    /**
-     * Gestisce il comando 1: clustering dalla tabella del database
-     */
+        
+        /**
+         * Gestisce il comando 1: learning dal database con algoritmo QT
+         */
     private void handleLearningFromDbTable() {
         try {
-            // Leggi il radius dal client
-            double radius = (Double) in.readObject();
-            System.out.println("Esecuzione clustering con raggio: " + radius);
-            
             // Verifica che i dati siano stati caricati
-            if (this.data == null) {
-                throw new Exception("Nessuna tabella caricata. Eseguire prima il comando 0.");
+            if (data == null) {
+                throw new IllegalStateException("Nessuna tabella caricata. Eseguire prima il comando 0.");
             }
             
-            // Crea il QTMiner ed esegui clustering
-            this.kmeans = new QTMiner(radius);
-            int numClusters = kmeans.compute(data);
+            // Leggi il raggio dal client
+            double radius = (double) in.readObject();
+            System.out.println("Esecuzione clustering con raggio: " + radius);
             
-            // Invia la risposta al client secondo il protocollo
+            // Valida il raggio
+            if (radius <= 0) {
+                throw new IllegalArgumentException("Il raggio deve essere maggiore di zero");
+            }
+            
+            // Crea l'oggetto QTMiner ed esegui il clustering
+            kmeans = new QTMiner(radius);
+            int numClusters = kmeans.compute(data);  // QUI può lanciare ClusteringRadiusException
+            
+            // SOLO SE NON CI SONO ECCEZIONI, invia OK e risultati
             out.writeObject("OK");
-            out.flush();
             out.writeObject(numClusters);
-            out.flush();
             out.writeObject(kmeans.getC().toString(data));
             out.flush();
             
-            System.out.println("Clustering completato: " + numClusters + " cluster trovati");
+            System.out.println("Clustering completato: " + numClusters + " cluster generati");
             
-        } catch (Exception e) {
+        } catch (ClusteringRadiusException e) {
+            // Gestione specifica per raggio troppo grande
+            System.err.println("Raggio troppo grande: " + e.getMessage());
+            
+            try {
+                out.writeObject("Errore: Il raggio inserito è troppo grande! Tutte le tuple sono finite in un unico cluster. Prova con un raggio più piccolo (es. 0.5, 0.3, 0.1)");
+                out.flush();
+            } catch (IOException ioException) {
+                System.err.println("Errore critico: impossibile comunicare con il client");
+            }
+        } catch (ClassNotFoundException | IOException | EmptyDatasetException | 
+                IllegalStateException | IllegalArgumentException e) {
+            System.err.println("Errore nel learning: " + e.getMessage());
+            
             try {
                 out.writeObject("ERROR: " + e.getMessage());
                 out.flush();
             } catch (IOException ioException) {
-                System.err.println("Errore nell'invio del messaggio di errore: " + ioException.getMessage());
+                System.err.println("Errore critico: impossibile comunicare con il client");
             }
-            System.err.println("Errore nel clustering: " + e.getMessage());
         }
     }
     
@@ -170,129 +184,101 @@ public class ServerOneClient extends Thread {
      * Gestisce il comando 2: salvataggio cluster su file
      */
     private void handleStoreClusterInFile() {
-        try {
-            // Verifica che sia stato eseguito un clustering
-            if (kmeans == null || kmeans.getC() == null) {
-                throw new Exception("Nessun clustering disponibile da salvare. Eseguire prima il comando 1.");
-            }
+	try {
+		// Verifica che il clustering sia stato eseguito
+		if (kmeans == null) {
+			throw new IllegalStateException("Nessun clustering eseguito. Eseguire prima il comando 1.");
+		}
+		
+		// Leggi il nome del file dal client
+		String fileName = (String) in.readObject();
+		
+		// Salva i cluster su file
+		kmeans.salva(fileName);
+		
+		// Conferma il salvataggio
+		out.writeObject("OK");
+		out.flush();
+		System.out.println("Cluster salvati su file: " + fileName);
+		
+        } catch (ClassNotFoundException | IOException | IllegalStateException e) {
+            System.err.println("Errore nel salvataggio: " + e.getMessage());
+            e.printStackTrace();
             
-            // Genera un nome file univoco basato sul timestamp
-            String fileName = "clusters_" + System.currentTimeMillis();
-            
-            // Utilizza il metodo salva() di QTMiner per serializzare i cluster
-            kmeans.salva(fileName + ".dmp");
-            
-            out.writeObject("OK");
-            out.flush();
-            System.out.println("Cluster salvati nel file: " + fileName + ".dmp");
-            
-        } catch (Exception e) {
             try {
                 out.writeObject("ERROR: " + e.getMessage());
                 out.flush();
             } catch (IOException ioException) {
-                System.err.println("Errore nell'invio del messaggio di errore: " + ioException.getMessage());
+                System.err.println("Errore critico: impossibile comunicare con il client");
+                ioException.printStackTrace();
             }
-            System.err.println("Errore nel salvataggio: " + e.getMessage());
         }
     }
     
-    // /**
-    //  * Gestisce il comando 3: caricamento cluster da file
-    //  * NOTA: Questo comando dovrebbe caricare cluster già salvati, 
-    //  * ma dal MainTest sembra che richieda tableName e radius per fare clustering.
-    //  * Implemento secondo il comportamento atteso dal client.
-    //  */
-    // private void handleLearningFromFile() {
-    //     try {
-    //         // Leggi nome tabella e radius dal client
-    //         String tableName = (String) in.readObject();
-    //         double radius = (Double) in.readObject();
-            
-    //         System.out.println("Learning from file - Tabella: " + tableName + ", Raggio: " + radius);
-            
-    //         // Carica i dati dalla tabella del database
-    //         Data fileData = new Data(tableName);
-            
-    //         // Esegui clustering
-    //         QTMiner fileMiner = new QTMiner(radius);
-    //         fileMiner.compute(fileData);
-            
-    //         // Invia la risposta al client
-    //         out.writeObject("OK");
-    //         out.flush();
-    //         out.writeObject(fileMiner.getC().toString(fileData));
-    //         out.flush();
-            
-    //         System.out.println("Clustering da file completato");
-            
-    //     } catch (Exception e) {
-    //         try {
-    //             out.writeObject("ERROR: " + e.getMessage());
-    //             out.flush();
-    //         } catch (IOException ioException) {
-    //             System.err.println("Errore nell'invio del messaggio di errore: " + ioException.getMessage());
-    //         }
-    //         System.err.println("Errore nel learning from file: " + e.getMessage());
-    //     }
-    // }
-
     /**
- * Gestisce il comando 3: caricamento cluster da file
- */
-private void handleLearningFromFile() {
-    try {
-        // Leggi il nome del file dal client
-        String fileName = (String) in.readObject();
-        
-        System.out.println("Caricamento cluster dal file: " + fileName);
-        
-        // Verifica che i dati siano stati caricati (necessari per toString)
-        if (this.data == null) {
-            throw new Exception("Nessuna tabella caricata. Eseguire prima il comando 0.");
-        }
-        
-        // Carica i cluster dal file usando il costruttore
-            if (!fileName.endsWith(".dmp")) {
-                fileName = fileName + ".dmp";
-            }
-            this.kmeans = new QTMiner(fileName);     
-        // Invia la risposta al client
-        out.writeObject("OK");
-        out.flush();
-        out.writeObject(kmeans.getC().toString(data));
-        out.flush();
-        
-        System.out.println("Cluster caricati dal file con successo");
-        
-    } catch (Exception e) {
+     * Gestisce il comando 3: caricamento cluster da file
+     */
+    private void handleLearningFromFile() {
+        String fileName = null;
         try {
-            out.writeObject("ERROR: " + e.getMessage());
+            // Verifica che i dati siano stati caricati
+            if (data == null) {
+                throw new IllegalStateException("Nessuna tabella caricata. Eseguire prima il comando 0.");
+            }
+            
+            // Leggi il nome del file dal client
+            fileName = (String) in.readObject();
+            System.out.println("Caricamento cluster dal file: " + fileName);
+            
+            // Valida l'input
+            if (fileName == null || fileName.trim().isEmpty()) {
+                throw new IllegalArgumentException("Nome file non valido");
+            }
+            
+            // Carica i cluster dal file
+            kmeans = new QTMiner(fileName);
+            
+            // Invia conferma e risultati
+            out.writeObject("OK");
+            out.writeObject(kmeans.getC().toString(data));
             out.flush();
-        } catch (IOException ioException) {
-            System.err.println("Errore nell'invio del messaggio di errore: " + ioException.getMessage());
+            
+            System.out.println("Cluster caricati con successo dal file: " + fileName);
+            
+        } catch (ClassNotFoundException | IOException | IllegalStateException | IllegalArgumentException e) {
+    
+            try {
+                String errorMsg = "Errore: ";
+                if (e instanceof java.io.FileNotFoundException) {
+                    errorMsg += "File '" + fileName + "' non trovato. Assicurati che il file esista e sia nella directory corretta.";
+                    System.err.println("File non trovato: " + fileName);
+                } else {
+                    errorMsg += e.getMessage();
+                    System.err.println("Errore nel caricamento da file: " + e.getMessage());
+                }
+                out.writeObject(errorMsg);
+                out.flush();
+            } catch (IOException ioException) {
+                System.err.println("Errore critico: impossibile comunicare con il client");
+                }   
         }
-        System.err.println("Errore nel caricamento dal file: " + e.getMessage());
     }
-}
     
     /**
-     * Chiude la connessione e le risorse associate
+     * Chiude la connessione e libera le risorse
      */
     private void closeConnection() {
-        try {
-            if (in != null) {
-                in.close();
-            }
-            if (out != null) {
-                out.close();
-            }
-            if (socket != null && !socket.isClosed()) {
+    try {
+        if (in != null) in.close();
+        if (out != null) out.close();
+            if (socket != null) {
+                System.out.println("Connessione chiusa con il client " + 
+                                socket.getInetAddress().getHostAddress() + 
+                                ":" + socket.getPort());
                 socket.close();
             }
-            System.out.println("Connessione chiusa per il client");
         } catch (IOException e) {
-            System.err.println("Errore nella chiusura della connessione: " + e.getMessage());
+            System.err.println("Errore durante la chiusura della connessione: " + e.getMessage());
         }
     }
 }

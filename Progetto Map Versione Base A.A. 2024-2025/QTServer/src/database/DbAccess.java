@@ -35,13 +35,13 @@ public class DbAccess {
                          "?user=" + USER_ID + "&password=" + PASSWORD + "&useSSL=false&serverTimezone=UTC";
         
 
-            System.out.println("Connection's String: " + connectionString);
+            // System.out.println("Connection's String: " + connectionString);
 
             try {
                 conn = DriverManager.getConnection(connectionString);
-            System.out.println("Connection established successfully.");
+            System.out.println("Connesso al database.");
             } catch (SQLException e) {
-                System.out.println("[!] Error establishing connection: " + e.getMessage());
+                System.out.println("[!] Errore nello stabilire la connessione al database: " + e.getMessage());
             throw new DatabaseConnectionException();
     }
     }
@@ -61,7 +61,7 @@ public class DbAccess {
             try {
                 conn.close();
             } catch (java.sql.SQLException e) {
-                System.out.println("[!] Error closing connection: " + e.getMessage());
+                System.out.println("[!] Errore nel chiudere la connessione: " + e.getMessage());
             }
     }
 }
