@@ -15,40 +15,89 @@ import java.io.ObjectOutputStream;
 
 
 /**
- * La classe {@code QTMiner} implementa l'algoritmo QT (Quality Threshold) per il clustering dei dati.
+ * Implementa l'algoritmo QT (Quality Threshold) per il clustering dei dati.
  * <p>
- * L'algoritmo QT raggruppa i dati in cluster basandosi su un raggio di vicinato specificato,
- * garantendo che ogni cluster contenga punti entro una distanza massima dal centroide.
- * A differenza di altri algoritmi come k-means, QT non richiede di specificare a priori
- * il numero di cluster, ma utilizza il raggio come parametro di qualità.
+ * L'algoritmo QT è un metodo di clustering basato sulla qualità che raggruppa i dati
+ * in cluster utilizzando un <b>raggio di vicinato</b> come parametro principale. A differenza
+ * di algoritmi come k-means che richiedono di specificare a priori il numero di cluster,
+ * QT determina automaticamente il numero di cluster garantendo che ogni cluster soddisfi
+ * un criterio di qualità: tutti i punti in un cluster devono trovarsi entro una distanza
+ * massima (il raggio) dal centroide.
  * </p>
+ * 
+ * <h2>Caratteristiche dell'algoritmo QT</h2>
+ * <ul>
+ *   <li><b>Non richiede il numero di cluster a priori</b>: il numero di cluster emerge
+ *       naturalmente dall'applicazione del criterio di qualità basato sul raggio</li>
+ *   <li><b>Garantisce la qualità dei cluster</b>: ogni punto è entro il raggio dal centroide</li>
+ *   <li><b>Deterministico</b>: produce sempre lo stesso risultato per gli stessi dati e raggio</li>
+ *   <li><b>Gestisce automaticamente outlier</b>: punti molto distanti formano cluster piccoli</li>
+ * </ul>
+ * 
+ * <h2>Scelta del raggio</h2>
  * <p>
- * La classe supporta la serializzazione per salvare e caricare i risultati del clustering
- * da file.
+ * Il parametro del raggio è cruciale per il risultato del clustering:
+ * <ul>
+ *   <li><b>Raggio troppo piccolo</b>: genera molti cluster piccoli, potenzialmente un cluster
+ *       per ogni punto del dataset</li>
+ *   <li><b>Raggio troppo grande</b>: tutti i punti finiscono in un unico cluster, lanciando
+ *       {@link ClusteringRadiusException}</li>
+ *   <li><b>Raggio ottimale</b>: dipende dalla distribuzione e scala dei dati; valori
+ *       tipici sono 0.1, 0.3, 0.5 per dati normalizzati in [0,1]</li>
+ * </ul>
  * </p>
- *
+ * 
+ * <h2>Serializzazione</h2>
+ * <p>
+ * La classe implementa {@link Serializable} per permettere il salvataggio e il caricamento
+ * dei risultati del clustering da file, evitando di dover ricalcolare i cluster per analisi
+ * successive.
+ * </p>
+ * 
+ * @see Cluster
+ * @see ClusterSet
+ * @see ClusteringRadiusException
  */
 public class QTMiner implements Serializable {
     
     /**
      * L'insieme dei cluster generati dall'algoritmo QT.
-     * Contiene tutti i cluster identificati durante l'esecuzione dell'algoritmo.
+     * <p>
+     * Contiene tutti i cluster identificati durante l'esecuzione del metodo
+     * {@link #compute(Data)}. Inizialmente vuoto, viene popolato progressivamente
+     * durante l'esecuzione dell'algoritmo.
+     * </p>
      */
     private ClusterSet C;
     
     /**
      * Il raggio di vicinato utilizzato per determinare l'appartenenza di una tupla a un cluster.
-     * Rappresenta la distanza massima entro cui una tupla può essere inclusa in un cluster.
+     * <p>
+     * Rappresenta la <b>distanza massima</b> entro cui una tupla può essere inclusa in un cluster
+     * dal suo centroide. Questo parametro definisce il criterio di qualità dell'algoritmo QT:
+     * solo le tuple che si trovano entro questo raggio dal centroide possono far parte del cluster.
+     * </p>
+     * <p>
+     * Valori tipici dipendono dalla scala e normalizzazione dei dati. Per dati normalizzati
+     * in [0,1], raggi comuni sono 0.1, 0.3, 0.5.
+     * </p>
      */
     private double radius;
 
     /**
      * Costruisce un nuovo oggetto {@code QTMiner} con il raggio di clustering specificato.
-     * Inizializza l'insieme dei cluster come vuoto.
+     * <p>
+     * Inizializza un nuovo miner con l'insieme dei cluster vuoto. Il clustering effettivo
+     * viene eseguito successivamente tramite il metodo {@link #compute(Data)}.
+     * </p>
      * 
      * @param radius il raggio di vicinato per il clustering. Deve essere un valore positivo.
-     *               Un raggio troppo grande può portare a cluster eccessivamente popolosi,
-     *               mentre un raggio troppo piccolo può generare molti cluster piccoli.
+     *               <ul>
+     *                 <li>Un raggio troppo grande può portare a cluster eccessivamente popolosi
+     *                     (tutti i dati in un unico cluster)</li>
+     *                 <li>Un raggio troppo piccolo può generare molti cluster piccoli o addirittura
+     *                     un cluster per ogni tupla</li>
+     *               </ul>
      */
     public QTMiner(double radius){
         this.C = new ClusterSet();
@@ -57,13 +106,29 @@ public class QTMiner implements Serializable {
 
     /**
      * Costruisce un nuovo oggetto {@code QTMiner} caricando i cluster da un file precedentemente salvato.
+     * <p>
      * Questo costruttore permette di ripristinare lo stato di un clustering già eseguito
-     * senza dover ricalcolare i cluster.
+     * senza dover ricalcolare i cluster. È utile per:
+     * <ul>
+     *   <li>Analizzare risultati di clustering precedenti</li>
+     *   <li>Confrontare diversi clustering</li>
+     *   <li>Risparmiare tempo di calcolo su dataset grandi</li>
+     * </ul>
+     * </p>
+     * <p>
+     * <b>Nota:</b> Il file deve essere stato creato tramite il metodo {@link #salva(String)}
+     * e contenere un oggetto {@link ClusterSet} serializzato. Il raggio originale utilizzato
+     * per generare i cluster non viene caricato dal file.
+     * </p>
      * 
      * @param fileName il percorso completo (path + nome) del file da cui caricare i cluster.
-     * @throws FileNotFoundException se il file specificato non esiste.
-     * @throws IOException se si verifica un errore durante la lettura del file.
-     * @throws ClassNotFoundException se la classe degli oggetti deserializzati non viene trovata.
+     *                 Esempio: {@code "clustering_results.dat"} o {@code "data/clusters.ser"}
+     * @throws FileNotFoundException se il file specificato non esiste nel percorso indicato.
+     * @throws IOException se si verifica un errore durante la lettura del file
+     *                     (file corrotto, permessi insufficienti, etc.).
+     * @throws ClassNotFoundException se la classe {@link ClusterSet} non viene trovata durante
+     *                                la deserializzazione (problema di classpath o versioni).
+     * @see #salva(String)
      */
     public QTMiner(String fileName) throws FileNotFoundException, IOException, ClassNotFoundException{
         ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileName));
@@ -76,12 +141,22 @@ public class QTMiner implements Serializable {
 
     /**
      * Salva l'insieme dei cluster corrente su file mediante serializzazione.
-     * I cluster possono essere successivamente ricaricati utilizzando il costruttore
-     * {@link #QTMiner(String)}.
+     * <p>
+     * Serializza l'oggetto {@link ClusterSet} contenente tutti i cluster generati
+     * e lo scrive su file. I cluster possono essere successivamente ricaricati
+     * utilizzando il costruttore {@link #QTMiner(String)}.
+     * </p>
+     * <p>
+     * <b>Nota:</b> Il file viene sovrascritto se esiste già. Il raggio utilizzato
+     * per generare i cluster non viene salvato nel file.
+     * </p>
      * 
      * @param fileName il percorso completo (path + nome) del file in cui salvare i cluster.
-     * @throws FileNotFoundException se il percorso specificato non è valido.
+     *                 Esempio: {@code "clustering_results.dat"} o {@code "data/clusters.ser"}
+     * @throws FileNotFoundException se il percorso specificato non è valido o non si hanno
+     *                               permessi di scrittura nella directory.
      * @throws IOException se si verifica un errore durante la scrittura del file.
+     * @see #QTMiner(String)
      */
     public void salva(String fileName) throws FileNotFoundException, IOException {
         ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fileName));
@@ -95,7 +170,9 @@ public class QTMiner implements Serializable {
     /**
      * Restituisce l'insieme dei cluster generati dall'algoritmo.
      * 
-     * @return l'oggetto {@code ClusterSet} contenente tutti i cluster identificati.
+     * @return l'oggetto {@link ClusterSet} contenente tutti i cluster identificati
+     *         dall'ultima esecuzione di {@link #compute(Data)} o caricati da file
+     *         tramite {@link #QTMiner(String)}.
      */
     public ClusterSet getC(){
         return C;
@@ -106,21 +183,50 @@ public class QTMiner implements Serializable {
      * <p>
      * L'algoritmo procede iterativamente secondo i seguenti passi:
      * <ol>
-     *   <li>Per ogni tupla non ancora clusterizzata, costruisce un cluster candidato
-     *       includendo tutti i punti (non ancora clusterizzati) che ricadono nel vicinato
-     *       sferico della tupla, definito dal raggio specificato.</li>
-     *   <li>Seleziona il cluster candidato più popoloso e lo aggiunge all'insieme
-     *       dei cluster finali {@code C}.</li>
-     *   <li>Marca tutte le tuple del cluster selezionato come già clusterizzate.</li>
-     *   <li>Ripete i passi precedenti finché tutte le tuple sono state assegnate a un cluster.</li>
+     *   <li><b>Costruzione cluster candidati</b>: Per ogni tupla non ancora clusterizzata,
+     *       costruisce un cluster candidato usando quella tupla come centroide e includendo
+     *       tutti i punti (non ancora clusterizzati) che ricadono nel vicinato sferico
+     *       definito dal raggio specificato.</li>
+     *   <li><b>Selezione del miglior candidato</b>: Seleziona il cluster candidato più popoloso
+     *       (con il maggior numero di tuple) e lo aggiunge all'insieme dei cluster finali {@code C}.</li>
+     *   <li><b>Aggiornamento stato</b>: Marca tutte le tuple del cluster selezionato come
+     *       già clusterizzate, in modo che non vengano considerate nelle iterazioni successive.</li>
+     *   <li><b>Iterazione</b>: Ripete i passi precedenti finché tutte le tuple sono state
+     *       assegnate a un cluster.</li>
      * </ol>
      * </p>
      * 
-     * @param data l'oggetto {@code Data} contenente il dataset da clusterizzare.
-     * @return il numero totale di cluster generati.
+     * <h3>Complessità Computazionale</h3>
+     * <p>
+     * La complessità temporale dell'algoritmo è <b>O(n³)</b> nel caso peggiore, dove n è il numero
+     * di tuple nel dataset. Questo perché:
+     * <ul>
+     *   <li>Per ogni iterazione (O(n) nel caso peggiore, se ogni tupla forma un cluster)</li>
+     *   <li>Si considera ogni tupla non clusterizzata come potenziale centroide (O(n))</li>
+     *   <li>Per ogni centroide, si calcola la distanza da tutte le altre tuple (O(n))</li>
+     * </ul>
+     * </p>
+     * 
+     * <h3>Validazione del Raggio</h3>
+     * <p>
+     * Il metodo verifica se il raggio è appropriato per il dataset:
+     * <ul>
+     *   <li>Se tutte le tuple finiscono in un unico cluster, il raggio è troppo grande
+     *       e viene lanciata {@link ClusteringRadiusException}</li>
+     *   <li>Questo controllo aiuta a identificare parametri inappropriati e suggerisce
+     *       di ridurre il valore del raggio</li>
+     * </ul>
+     * </p>
+     * 
+     * @param data l'oggetto {@link Data} contenente il dataset da clusterizzare.
+     *             Deve contenere almeno una tupla.
+     * @return il numero totale di cluster generati dall'algoritmo.
      * @throws EmptyDatasetException se il dataset è vuoto (non contiene esempi).
+     *                               Un dataset vuoto non può essere clusterizzato.
      * @throws ClusteringRadiusException se tutte le tuple finiscono in un unico cluster,
      *         indicando che il raggio di clustering è troppo grande per il dataset fornito.
+     *         In questo caso, si consiglia di ridurre il valore del raggio.
+     * @see #buildCandidateCluster(Data, boolean[])
      */
     public int compute(Data data) throws ClusteringRadiusException, EmptyDatasetException {
     // Controllo dataset vuoto
@@ -165,20 +271,46 @@ public class QTMiner implements Serializable {
      * Costruisce i cluster candidati per tutte le tuple non ancora clusterizzate
      * e restituisce quello con la dimensione maggiore.
      * <p>
-     * Per ogni tupla non clusterizzata, il metodo:
-     * <ul>
-     *   <li>La considera come potenziale centroide di un nuovo cluster.</li>
+     * Questo metodo implementa il cuore dell'algoritmo QT. Per ogni tupla non ancora
+     * clusterizzata nel dataset:
+     * <ol>
+     *   <li>La considera come potenziale centroide di un nuovo cluster candidato</li>
      *   <li>Aggiunge al cluster tutte le tuple non ancora clusterizzate che si trovano
-     *       entro il raggio specificato dal centroide.</li>
-     *   <li>Confronta la dimensione di questo cluster candidato con il migliore trovato finora.</li>
-     * </ul>
+     *       entro il raggio specificato dal centroide (distanza ≤ radius)</li>
+     *   <li>Confronta la dimensione di questo cluster candidato con il migliore trovato finora</li>
+     *   <li>Mantiene il cluster candidato con il maggior numero di tuple</li>
+     * </ol>
+     * </p>
+     * <p>
+     * Alla fine del processo, restituisce il cluster candidato più popoloso, che sarà
+     * quello aggiunto definitivamente all'insieme dei cluster finali nel metodo {@link #compute(Data)}.
      * </p>
      * 
-     * @param data l'oggetto {@code Data} contenente il dataset.
+     * <h3>Strategia Greedy</h3>
+     * <p>
+     * L'algoritmo utilizza una strategia greedy (golosa): ad ogni iterazione sceglie il cluster più grande
+     * possibile tra tutti quelli candidati. Questo garantisce che il numero totale di cluster
+     * sia minimizzato, dato il vincolo del raggio. La strategia greedy non garantisce
+     * necessariamente la soluzione ottimale globale, ma fornisce una buona approssimazione
+     * in tempo ragionevole.
+     * </p>
+     * 
+     * <h3>Complessità</h3>
+     * <p>
+     * La complessità temporale di questo metodo è <b>O(n²)</b>, dove n è il numero di tuple
+     * non ancora clusterizzate, poiché per ogni tupla (O(n)) calcola le distanze da tutte
+     * le altre tuple non clusterizzate (O(n)).
+     * </p>
+     * 
+     * @param data l'oggetto {@link Data} contenente il dataset da clusterizzare.
      * @param isClustered array booleano che indica quali tuple sono già state assegnate a un cluster.
-     *                    {@code true} indica che la tupla all'indice corrispondente è già clusterizzata.
+     *                    {@code isClustered[i] = true} indica che la tupla all'indice {@code i}
+     *                    è già stata clusterizzata e non deve essere considerata come centroide
+     *                    né aggiunta a nuovi cluster candidati.
      * @return il cluster candidato con il maggior numero di tuple, oppure {@code null} se non
-     *         ci sono tuple disponibili per formare cluster.
+     *         ci sono tuple disponibili per formare cluster (tutte le tuple sono già clusterizzate).
+     * @see Cluster#addData(Tuple)
+     * @see Tuple#getDistance(Tuple)
      */
     public Cluster buildCandidateCluster(Data data, boolean[] isClustered){
         Cluster bestCluster = null;
