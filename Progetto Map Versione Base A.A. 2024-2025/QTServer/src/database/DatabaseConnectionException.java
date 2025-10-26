@@ -1,40 +1,30 @@
 package database;
 
 /**
- * La classe 'DatabaseConnectionException' modella il 
- * fallimento nella connessione al database.
+ * Eccezione lanciata quando si verifica un errore nella connessione al database.
+ * <p>
+ * Questa eccezione viene sollevata quando il tentativo di stabilire una connessione
+ * al database fallisce, ad esempio per driver mancanti, credenziali errate,
+ * server non raggiungibile o altri problemi di connettività.
+ * </p>
+ * 
+ * @see DbAccess#initConnection()
  */
 public class DatabaseConnectionException extends Exception {
     
     /**
-     * Costruttore di default.
+     * Costruisce una nuova eccezione senza messaggio descrittivo.
      */
     public DatabaseConnectionException() {
         super();
     }
     
     /**
-     * Costruttore con messaggio personalizzato.
-     * @param message il messaggio descrittivo dell'eccezione.
+     * Costruisce una nuova eccezione con il messaggio descrittivo specificato.
+     * 
+     * @param message il messaggio descrittivo dell'eccezione
      */
     public DatabaseConnectionException(String message) {
         super(message);
     }
-    
-    // /**
-    //  * Costruttore con messaggio e causa.
-    //  * @param message il messaggio descrittivo dell'eccezione.
-    //  * @param cause l'eccezione che ha causato questo errore.
-    //  */
-    // public DatabaseConnectionException(String message, Throwable cause) {
-    //     super(message, cause);
-    // }
-    
-    // /**
-    //  * Costruttore con causa.
-    //  * @param cause l'eccezione che ha causato questo errore.
-    //  */
-    // public DatabaseConnectionException(Throwable cause) {
-    //     super(cause);
-    // }
 }
