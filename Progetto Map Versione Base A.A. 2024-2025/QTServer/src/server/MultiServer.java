@@ -96,7 +96,7 @@ public class MultiServer {
     public static void main(String[] args){
         int PORT = 8080;
         System.out.println("Avvio server sulla porta " + PORT + "...");
-        MultiServer multiserver = new MultiServer(PORT);
+        new MultiServer(PORT);
     }
 
 }

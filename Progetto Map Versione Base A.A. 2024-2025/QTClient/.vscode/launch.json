@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "MainTest con argomenti",
+            "request": "launch",
+            "mainClass": "MainTest",
+            "args": ["localhost", "8080"]
+        }
+    ]
+}

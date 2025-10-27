@@ -70,9 +70,9 @@ public class MainTest {
 	private int menu(){
 		int answer;
 		
-		System.out.println("\nScegli una opzione:");
-		System.out.println("(1) Load clusters from file");
-		System.out.println("(2) Load data from db");
+		System.out.println("\nScegli un'opzione:");
+		System.out.println("(1) Carica cluster da un file");
+		System.out.println("(2) Scopri cluster da un database");
 		System.out.print("(1/2):");
 		answer = Keyboard.readInt();
 		
@@ -220,7 +220,7 @@ public class MainTest {
 	 */
 	public static void main(String[] args) {
 		String ip = args[0];
-		int port = new Integer(args[1]).intValue();
+		int port = Integer.parseInt(args[1]);
 		MainTest main = null;
 		
 		try{

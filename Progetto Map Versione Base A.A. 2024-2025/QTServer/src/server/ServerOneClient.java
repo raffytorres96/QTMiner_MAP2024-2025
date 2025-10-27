@@ -292,7 +292,7 @@ public class ServerOneClient extends Thread {
             System.err.println("Raggio troppo grande: " + e.getMessage());
             
             try {
-                out.writeObject("Errore: Il raggio inserito è troppo grande! Tutte le tuple sono finite in un unico cluster. Prova con un raggio più piccolo (es. 0.5, 0.3, 0.1)");
+                out.writeObject("Errore: Il raggio inserito è troppo grande! Tutte le tuple sono finite in un unico cluster. Prova con un raggio più piccolo (es. 1, 2, 3)");
                 out.flush();
             } catch (IOException ioException) {
                 System.err.println("Errore critico: impossibile comunicare con il client");
