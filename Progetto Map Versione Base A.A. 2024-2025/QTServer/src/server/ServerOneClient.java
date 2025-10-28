@@ -10,6 +10,7 @@ import data.Data;
 import data.EmptyDatasetException;
 import database.DatabaseConnectionException;
 import database.EmptySetException;
+import mining.Cluster;
 import mining.ClusteringRadiusException;
 import mining.QTMiner;
 
@@ -407,51 +408,79 @@ public class ServerOneClient extends Thread {
      * 
      * @see QTMiner#QTMiner(String)
      */
-    private void handleLearningFromFile() {
-        String fileName = null;
-        try {
-            // Verifica che i dati siano stati caricati
-            if (data == null) {
-                throw new IllegalStateException("Nessuna tabella caricata. Eseguire prima il comando 0.");
-            }
+    // private void handleLearningFromFile() {
+    //     String fileName = null;
+    //     try {
+    //         // Verifica che i dati siano stati caricati
+    //         if (data == null) {
+    //             throw new IllegalStateException("Nessuna tabella caricata. Eseguire prima il comando 0.");
+    //         }
             
-            // Leggi il nome del file dal client
-            fileName = (String) in.readObject();
-            System.out.println("Caricamento cluster dal file: " + fileName);
+    //         // Leggi il nome del file dal client
+    //         fileName = (String) in.readObject();
+    //         System.out.println("Caricamento cluster dal file: " + fileName);
             
-            // Valida l'input
-            if (fileName == null || fileName.trim().isEmpty()) {
-                throw new IllegalArgumentException("Nome file non valido");
-            }
+    //         // Valida l'input
+    //         if (fileName == null || fileName.trim().isEmpty()) {
+    //             throw new IllegalArgumentException("Nome file non valido");
+    //         }
             
-            // Carica i cluster dal file
-            kmeans = new QTMiner(fileName);
+    //         // Carica i cluster dal file
+    //         kmeans = new QTMiner(fileName);
             
-            // Invia conferma e risultati
-            out.writeObject("OK");
-            out.writeObject(kmeans.getC().toString(data));
-            out.flush();
+    //         // Invia conferma e risultati
+    //         out.writeObject("OK");
+    //         out.writeObject(kmeans.getC().toString(data));
+    //         out.flush();
             
-            System.out.println("Cluster caricati con successo dal file: " + fileName);
+    //         System.out.println("Cluster caricati con successo dal file: " + fileName);
             
-        } catch (ClassNotFoundException | IOException | IllegalStateException | IllegalArgumentException e) {
+    //     } catch (ClassNotFoundException | IOException | IllegalStateException | IllegalArgumentException e) {
     
-            try {
-                String errorMsg = "Errore: ";
-                if (e instanceof java.io.FileNotFoundException) {
-                    errorMsg += "File '" + fileName + "' non trovato. Assicurati che il file esista e sia nella directory corretta.";
-                    System.err.println("File non trovato: " + fileName);
-                } else {
-                    errorMsg += e.getMessage();
-                    System.err.println("Errore nel caricamento da file: " + e.getMessage());
-                }
-                out.writeObject(errorMsg);
-                out.flush();
-            } catch (IOException ioException) {
-                System.err.println("Errore critico: impossibile comunicare con il client");
-                }   
-        }
+    //         try {
+    //             String errorMsg = "Errore: ";
+    //             if (e instanceof java.io.FileNotFoundException) {
+    //                 errorMsg += "File '" + fileName + "' non trovato. Assicurati che il file esista e sia nella directory corretta.";
+    //                 System.err.println("File non trovato: " + fileName);
+    //             } else {
+    //                 errorMsg += e.getMessage();
+    //                 System.err.println("Errore nel caricamento da file: " + e.getMessage());
+    //             }
+    //             out.writeObject(errorMsg);
+    //             out.flush();
+    //         } catch (IOException ioException) {
+    //             System.err.println("Errore critico: impossibile comunicare con il client");
+    //             }   
+    //     }
+    // }
+
+    private void handleLearningFromFile() {
+    String fileName = null;
+    try {
+        if (data == null) throw new IllegalStateException("Nessuna tabella caricata. Eseguire prima il comando 0.");
+
+        fileName = (String) in.readObject();
+        if (fileName == null || fileName.trim().isEmpty())
+            throw new IllegalArgumentException("Nome file non valido");
+
+        kmeans = new QTMiner(fileName);
+
+        // Conta cluster senza size()
+        int clusterCount = 0;
+        for (Cluster ignored : kmeans.getC()) clusterCount++;
+
+        String clustersText = kmeans.getC().toString(data);
+
+        // ✅ Ordine compatibile col tuo client Java
+        out.writeObject("OK");             // 1) stato
+        out.writeObject(clustersText);     // 2) STRINGA (il tuo client Java legge qui e si ferma)
+        out.writeObject(clusterCount);     // 3) opzionale per Android
+        out.flush();
+
+    } catch (Exception e) {
+        try { out.writeObject("Errore: " + e.getMessage()); out.flush(); } catch (IOException ignore) {}
     }
+}
     
     /**
      * Chiude la connessione con il client e libera tutte le risorse associate.
