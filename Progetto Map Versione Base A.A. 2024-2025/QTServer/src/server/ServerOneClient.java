@@ -20,23 +20,33 @@ import mining.QTMiner;
  * Ogni istanza di questa classe gestisce un client specifico attraverso un socket dedicato
  * e rimane in ascolto dei comandi inviati dal client, elaborandoli di conseguenza.
  * </p>
- * 
- * <h2>Protocollo di Comunicazione</h2>
- * Il server supporta 4 comandi principali identificati da codici numerici:
+ * * <h2>Protocollo di Comunicazione</h2>
+ * Il server supporta due protocolli paralleli per servire client diversi:
+ * <br><br>
+ * * <h3>Protocollo Complesso (per client Java)</h3>
+ * <p>Utilizza risposte multiple (es. "OK" seguito dai dati).</p>
  * <ul>
- *   <li><b>Comando 0</b>: Caricamento di una tabella dal database</li>
- *   <li><b>Comando 1</b>: Esecuzione del clustering QT sui dati caricati</li>
- *   <li><b>Comando 2</b>: Salvataggio dei cluster generati su file</li>
- *   <li><b>Comando 3</b>: Caricamento di cluster precedentemente salvati da file</li>
+ * <li><b>Comando 0</b>: {@link #handleStoreTableFromDb()} - Caricamento tabella dal database</li>
+ * <li><b>Comando 1</b>: {@link #handleLearningFromDbTable()} - Esecuzione clustering QT</li>
+ * <li><b>Comando 2</b>: {@link #handleStoreClusterInFile()} - Salvataggio cluster su file</li>
+ * <li><b>Comando 3</b>: {@link #handleLearningFromFile()} - Caricamento cluster da file</li>
  * </ul>
- * 
- * <h2>Gestione degli Errori</h2>
+ * * <h3>Protocollo Semplice (per client Android)</h3>
+ * <p>Utilizza una singola stringa come risposta (dati o messaggio di errore).</p>
+ * <ul>
+ * <li><b>Comando 10</b>: {@link #handleStoreTableFromDb_Simple()} - Caricamento tabella</li>
+ * <li><b>Comando 11</b>: {@link #handleLearningFromDbTable_Simple()} - Esecuzione clustering QT</li>
+ * <li><b>Comando 12</b>: {@link #handleStoreClusterInFile_Simple()} - Salvataggio cluster</li>
+ * <li><b>Comando 13</b>: {@link #handleLearningFromFile_Simple()} - Caricamento cluster</li>
+ * </ul>
+ * * <h2>Gestione degli Errori</h2>
+ * <p>
  * Ogni comando gestisce le proprie eccezioni specifiche e invia messaggi di errore
  * dettagliati al client attraverso lo stream di output. In caso di errori critici
- * di comunicazione, la connessione viene chiusa automaticamente.
- * 
- * @author [Nome Autore]
- * @version 1.0
+ * di comunicazione (es. <code>SocketException</code>), la connessione viene chiusa automaticamente.
+ * </p>
+ * * @author [Nome Autore]
+ * @version 1.1 - Aggiunto supporto per protocollo semplice Android
  * @see QTMiner
  * @see Data
  * @see MultiServer
