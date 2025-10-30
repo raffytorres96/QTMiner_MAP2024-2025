@@ -479,7 +479,7 @@ public class ServerOneClient extends Thread {
         } finally {
             // Questo blocco viene eseguito SEMPRE, sia dopo il successo (4)
             // sia dopo aver tentato di inviare un errore (6).
-            // Garantisce che qualsiasi cosa abbiamo scritto venga spedita.
+            // Garantisce che qualsiasi cosa scritta venga spedita.
             try {
                 out.flush();
             } catch (IOException e) {
@@ -488,9 +488,19 @@ public class ServerOneClient extends Thread {
         }
     }
 
-    /**
-     * Gestisce il COMANDO 10 (Android)
-     * Risposta Semplice: "OK" o "Errore: ..."
+/**
+     * Gestisce il COMANDO 10 (Android - Protocollo Semplice).
+     * <p>
+     * Carica i dati da una tabella specificata del database. Questo metodo è
+     * necessario per inizializzare l'oggetto {@code data} prima di poter
+     * eseguire operazioni di clustering (11) o caricamento da file (13).
+     * </p>
+     * <b>Protocollo Semplice:</b>
+     * <ul>
+     * <li><b>Input Atteso:</b> String - Nome della tabella (es. "playtennis").</li>
+     * <li><b>Output:</b> String - "OK" in caso di successo, o "Errore: [messaggio]" in caso di fallimento.</li>
+     * </ul>
+     * * @see Data#Data(String)
      */
     private void handleStoreTableFromDb_Simple() {
         try {
@@ -498,7 +508,7 @@ public class ServerOneClient extends Thread {
             if (tableName == null || tableName.trim().isEmpty()) {
                 throw new IllegalArgumentException("Nome tabella non valido");
             }
-            this.data = new Data(tableName); // Assumendo che Data() gestisca eccezioni
+            this.data = new Data(tableName);
             out.writeObject("OK");
         } catch (Exception e) {
             try { out.writeObject("Errore: " + e.getMessage()); } catch (IOException ignore) {}
@@ -508,15 +518,30 @@ public class ServerOneClient extends Thread {
     }
 
     /**
-     * Gestisce il COMANDO 11 (Android)
-     * Risposta Semplice: Stringa Cluster o "Errore: ..."
+     * Gestisce il COMANDO 11 (Android - Protocollo Semplice).
+     * <p>
+     * Esegue l'algoritmo di clustering QT sui dati correntemente caricati
+     * (impostati dal comando 10) utilizzando il raggio specificato.
+     * </p>
+     * <b>Protocollo Semplice:</b>
+     * <ul>
+     * <li><b>Input Atteso:</b> Double - Il raggio per il clustering.</li>
+     * <li><b>Output:</b> String - La rappresentazione testuale dei cluster (<code>kmeans.getC().toString(data)</code>) 
+     * in caso di successo, o "Errore: [messaggio]" in caso di fallimento.</li>
+     * </ul>
+     * <b>Prerequisiti:</b>
+     * <ul>
+     * <li>È necessario aver eseguito con successo il comando 10 per inizializzare l'oggetto {@code data}.</li>
+     * </ul>
+     * * @see QTMiner#QTMiner(double)
+     * @see QTMiner#compute(Data)
      */
     private void handleLearningFromDbTable_Simple() {
         try {
-            // --- 1. LEGGI L'INPUT PRIMA DI TUTTO ---
+            // --- 1. LEGGE L'INPUT PRIMA DI TUTTO ---
             double radius = (double) in.readObject();
 
-            // --- 2. ORA FAI I CONTROLLI ---
+            // --- 2. ORA FA I CONTROLLI ---
             if (data == null) {
                 throw new IllegalStateException("Nessuna tabella caricata. Eseguire prima il comando 10.");
             }
@@ -524,7 +549,6 @@ public class ServerOneClient extends Thread {
                 throw new IllegalArgumentException("Il raggio deve essere maggiore di zero");
             }
 
-            // --- 3. LOGICA DI BUSINESS ---
             kmeans = new QTMiner(radius);
             kmeans.compute(data);
             out.writeObject(kmeans.getC().toString(data)); // Invia stringa di successo
@@ -537,16 +561,29 @@ public class ServerOneClient extends Thread {
     }
 
     /**
-     * Gestisce il COMANDO 12 (Android)
-     * Risposta Semplice: "OK" o "Errore: ..."
+     * Gestisce il COMANDO 12 (Android - Protocollo Semplice).
+     * <p>
+     * Salva su file (sul server) i cluster generati dall'ultima operazione
+     * di clustering (comando 11) o di caricamento (comando 13).
+     * </p>
+     * <b>Protocollo Semplice:</b>
+     * <ul>
+     * <li><b>Input Atteso:</b> String - Il nome del file (es. "clusters.dmp") in cui salvare i cluster.</li>
+     * <li><b>Output:</b> String - "OK" in caso di successo, o "Errore: [messaggio]" in caso di fallimento.</li>
+     * </ul>
+     * <b>Prerequisiti:</b>
+     * <ul>
+     * <li>È necessario aver eseguito con successo il comando 11 o 13 per inizializzare l'oggetto {@code kmeans}.</li>
+     * </ul>
+     * * @see QTMiner#salva(String)
      */
     private void handleStoreClusterInFile_Simple() {
         String fileName = null;
         try {
-            // --- 1. LEGGI L'INPUT PRIMA DI TUTTO ---
+            // --- 1. LEGGE L'INPUT PRIMA DI TUTTO ---
             fileName = (String) in.readObject();
 
-            // --- 2. ORA FAI I CONTROLLI ---
+            // --- 2. ORA FA I CONTROLLI ---
             if (kmeans == null) {
                 throw new IllegalStateException("Nessun clustering eseguito. Eseguire prima il clustering (comando 11).");
             }
@@ -554,7 +591,6 @@ public class ServerOneClient extends Thread {
                 throw new IllegalArgumentException("Nome file non valido");
             }
 
-            // --- 3. LOGICA DI BUSINESS ---
             kmeans.salva(fileName);
             out.writeObject("OK"); // Invia stringa di successo
             
@@ -566,15 +602,30 @@ public class ServerOneClient extends Thread {
     }
 
     /**
-     * Gestisce il COMANDO 13 (Android)
-     * Risposta Semplice: Stringa Cluster o "Errore: ..."
+     * Gestisce il COMANDO 13 (Android - Protocollo Semplice).
+     * <p>
+     * Carica i cluster da un file precedentemente salvato (sul server) e li
+     * applica ai dati correntemente in memoria (caricati con il comando 10)
+     * per restituirne la rappresentazione testuale.
+     * </p>
+     * <b>Protocollo Semplice:</b>
+     * <ul>
+     * <li><b>Input Atteso:</b> String - Il nome del file (es. "clusters.dmp") da cui caricare i cluster.</li>
+     * <li><b>Output:</b> String - La rappresentazione testuale dei cluster (<code>kmeans.getC().toString(data)</code>) 
+     * in caso di successo, o "Errore: [messaggio]" in caso di fallimento.</li>
+     * </ul>
+     * <b>Prerequisiti:</b>
+     * <ul>
+     * <li>È necessario aver eseguito con successo il comando 10 per inizializzare l'oggetto {@code data}.</li>
+     * </ul>
+     * * @see QTMiner#QTMiner(String)
      */
     private void handleLearningFromFile_Simple() {
         String fileName = null;
         try {
-            // --- 1. LEGGI L'INPUT PRIMA DI TUTTO ---
+            // --- 1. LEGGI L'INPUT ---
             // Il client invia il nome del file in ogni caso,
-            // quindi DOBBIAMO leggerlo per pulire lo stream.
+            // quindi bisogna leggerlo per pulire lo stream.
             fileName = (String) in.readObject(); 
 
             // --- 2. ORA FAI I CONTROLLI ---
@@ -585,7 +636,6 @@ public class ServerOneClient extends Thread {
                 throw new IllegalArgumentException("Nome file non valido");
             }
             
-            // --- 3. LOGICA DI BUSINESS ---
             kmeans = new QTMiner(fileName);
             out.writeObject(kmeans.getC().toString(data)); // Invia stringa di successo
             
