@@ -142,23 +142,49 @@ public class MainTest {
 	 * @throws IOException se si verifica un errore di I/O durante la comunicazione
 	 * @throws ClassNotFoundException se la classe dell'oggetto ricevuto non viene trovata
 	 */
-	private String learningFromDbTable() throws SocketException, ServerException, IOException, ClassNotFoundException{
-		out.writeObject(1);
-		double r = 1.0;
-		do{
-			System.out.print("Inserisci raggio:");
-			r = Keyboard.readDouble();
-		} while(r <= 0);
-		out.writeObject(r);
+	// 	private String learningFromDbTable() throws SocketException,ServerException,IOException,ClassNotFoundException{
+	// 	out.writeObject(1);
+	// 	double r=1.0;
+	// 	do{
+	// 		System.out.print("Radius:");
+	// 		r=Keyboard.readDouble();
+	// 	} while(r<=0);
+	// 	out.writeObject(r);
+	// 	String result = (String)in.readObject();
+	// 	if(result.equals("OK")){
+	// 		System.out.println("Number of Clusters:"+in.readObject());
+	// 		return (String)in.readObject();
+	// 	}
+	// 	else throw new ServerException(result);
+		
+		
+	// }
 
-		String result = (String)in.readObject();
-		if(result.equals("OK")){
-			System.out.println("Numero cluster:" + in.readObject());
-			return (String)in.readObject();
-		} else {
-			throw new ServerException(result);
-		}
-	}
+	private int learningFromDbTable() throws SocketException, ServerException, IOException, ClassNotFoundException{
+        out.writeObject(1);
+        double r = 1.0;
+        do{
+            System.out.print("Raggio:");
+            r = Keyboard.readDouble();
+        } while(r <= 0);
+        out.writeObject(r);
+
+        String result = (String)in.readObject();
+        if(result.equals("OK")){
+            // Legge i risultati dal server
+            int numClusters = (int)in.readObject();
+            String clusterString = (String)in.readObject();
+            
+            // Stampa i risultati
+            System.out.println("Numero cluster:" + numClusters);
+            System.out.println(clusterString);
+            
+            // Ritorna il CONTEGGIO
+            return numClusters; 
+        } else {
+            throw new ServerException(result);
+        }
+    }
 	
 	/**
 	 * Salva i cluster generati su un file.
@@ -261,28 +287,35 @@ public class MainTest {
 						}
 					} //end while
 					
-					// Poi carica i cluster dal file (comando 3)
-					try {
-						String kmeans = main.learningFromFile();
-						System.out.println(kmeans);
-					}
-					catch (SocketException e) {
-						System.out.println(e);
-						return;
-					}
-					catch (FileNotFoundException e) {
-						System.out.println(e);
-						return ;
-					} catch (IOException e) {
-						System.out.println(e);
-						return;
-					} catch (ClassNotFoundException e) {
-						System.out.println(e);
-						return;
-					}
-					catch (ServerException e) {
-						System.out.println(e.getMessage());
-					}
+					char answerCase1 = 'y';
+                    do {
+                        // Poi carica i cluster dal file (comando 3)
+                        try {
+                            String kmeans = main.learningFromFile();
+                            System.out.println(kmeans);
+                        }
+                        catch (SocketException e) {
+                            System.out.println(e);
+                            return;
+                        }
+                        catch (FileNotFoundException e) {
+                            System.out.println(e);
+                            return ;
+                        } catch (IOException e) {
+                            System.out.println(e);
+                            return;
+                        } catch (ClassNotFoundException e) {
+                            System.out.println(e);
+                            return;
+                        }
+                        catch (ServerException e) {
+                            System.out.println(e.getMessage());
+                        }
+
+                        System.out.print("Vuoi ripetere l'operazione? (y/n)");
+                        answerCase1 = Keyboard.readChar();
+
+                    } while(Character.toLowerCase(answerCase1) == 'y');
 					break;
 					
 				case 2: // learning from db
@@ -313,12 +346,17 @@ public class MainTest {
 					char answer = 'y'; //itera per learning al variare di k
 					do{
 						try
-						{
-							String clusterSet = main.learningFromDbTable();
-							System.out.println(clusterSet);
-							
-							main.storeClusterInFile();
-						}
+                        {
+                            // 1. Ottieni il numero di cluster
+                            int clusterCount = main.learningFromDbTable();
+                            
+                            // 2. Controlla prima di salvare
+                            if (clusterCount > 0) {
+                                main.storeClusterInFile();
+                            } else {
+                                System.out.println("Nessun cluster generato (0 cluster). Salvataggio saltato.");
+                            }
+                        }
 						catch (SocketException e) {
 							System.out.println(e);
 							return;
