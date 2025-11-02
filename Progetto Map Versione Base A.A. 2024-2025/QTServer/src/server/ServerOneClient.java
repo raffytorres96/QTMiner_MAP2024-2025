@@ -21,9 +21,9 @@ import mining.QTMiner;
  * e rimane in ascolto dei comandi inviati dal client, elaborandoli di conseguenza.
  * </p>
  * * <h2>Protocollo di Comunicazione</h2>
- * Il server supporta due protocolli paralleli per servire client diversi:
+ * Il server supporta protocolli paralleli per servire client diversi:
  * <br><br>
- * * <h3>Protocollo Complesso (per client Java)</h3>
+ * <h3>Protocollo Complesso (per client Java <code>MainTest</code>)</h3>
  * <p>Utilizza risposte multiple (es. "OK" seguito dai dati).</p>
  * <ul>
  * <li><b>Comando 0</b>: {@link #handleStoreTableFromDb()} - Caricamento tabella dal database</li>
@@ -39,14 +39,18 @@ import mining.QTMiner;
  * <li><b>Comando 12</b>: {@link #handleStoreClusterInFile_Simple()} - Salvataggio cluster</li>
  * <li><b>Comando 13</b>: {@link #handleLearningFromFile_Simple()} - Caricamento cluster</li>
  * </ul>
+ * * <h3>Protocollo di Utilità (Heartbeat)</h3>
+ * <p>Utilizzato per il monitoraggio della connessione.</p>
+ * <ul>
+ * <li><b>Comando 99</b>: Controlla la connessione (Ping). Il server risponde con la stringa "PONG".</li>
+ * </ul>
  * * <h2>Gestione degli Errori</h2>
  * <p>
  * Ogni comando gestisce le proprie eccezioni specifiche e invia messaggi di errore
  * dettagliati al client attraverso lo stream di output. In caso di errori critici
  * di comunicazione (es. <code>SocketException</code>), la connessione viene chiusa automaticamente.
  * </p>
- * * @author [Nome Autore]
- * @version 1.1 - Aggiunto supporto per protocollo semplice Android
+ *
  * @see QTMiner
  * @see Data
  * @see MultiServer
@@ -100,7 +104,7 @@ public class ServerOneClient extends Thread {
         start();
     }
     
-/**
+    /**
      * Metodo principale del thread che gestisce le richieste del client.
      * <p>
      * Rimane in ascolto continuo dei comandi inviati dal client attraverso lo stream
@@ -109,7 +113,7 @@ public class ServerOneClient extends Thread {
      * </p>
      * * <h3>Comandi Supportati</h3>
      * <p>
-     * Il server gestisce due protocolli paralleli per supportare diversi client:
+     * Il server gestisce protocolli paralleli per supportare diversi client:
      * </p>
      * * <b>Protocollo Complesso (es. per client Java <code>MainTest</code>):</b>
      * <ul>
@@ -124,6 +128,11 @@ public class ServerOneClient extends Thread {
      * <li><b>11</b>: {@link #handleLearningFromDbTable_Simple()} - Esegue clustering QT (protocollo a risposta singola)</li>
      * <li><b>12</b>: {@link #handleStoreClusterInFile_Simple()} - Salva cluster (protocollo a risposta singola)</li>
      * <li><b>13</b>: {@link #handleLearningFromFile_Simple()} - Carica cluster (protocollo a risposta singola)</li>
+     * </ul>
+     *
+     * <b>Protocollo di Utilità (Heartbeat):</b>
+     * <ul>
+     * <li><b>99</b>: Controlla la connessione (Ping). Il server risponde con la stringa "PONG".</li>
      * </ul>
      * * <p>
      * Il ciclo termina quando si verifica un'eccezione di I/O (tipicamente quando
@@ -165,6 +174,11 @@ public class ServerOneClient extends Thread {
                         break;
                     case 13: 
                         handleLearningFromFile_Simple();
+                        break;
+
+                    case 99: // Comando di PING
+                        out.writeObject("PONG");
+                        out.flush();
                         break;
 
                     default:
