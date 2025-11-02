@@ -231,7 +231,7 @@ public class QTMiner implements Serializable {
     public int compute(Data data) throws ClusteringRadiusException, EmptyDatasetException {
     // Controllo dataset vuoto
     if (data.getNumberOfExamples() == 0) {
-        throw new EmptyDatasetException("Dataset is empty!");
+        throw new EmptyDatasetException("Il Dataset è vuoto!");
     }
     
     int numclusters = 0;
@@ -262,7 +262,7 @@ public class QTMiner implements Serializable {
     }       
     
         if (numclusters == 1 && countClustered == data.getNumberOfExamples()) {
-            throw new ClusteringRadiusException(data.getNumberOfExamples() + " tuples in one cluster!");
+            throw new ClusteringRadiusException(data.getNumberOfExamples() + " tuple in un cluster!");
         }
     return numclusters;
     }
