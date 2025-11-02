@@ -141,7 +141,7 @@ public class ClusterSet implements Iterable<Cluster>, Serializable {
         while (it.hasNext()) {
                 Cluster c = it.next();
             if (c != null){
-            str+= i + ":" + c.toString(data) + "\n";
+            str+= i + ":" + c.toString(data) + "\n\n";
             i++;
             }
         }
