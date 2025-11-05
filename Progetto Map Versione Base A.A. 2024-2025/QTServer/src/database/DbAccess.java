@@ -113,7 +113,7 @@ public class DbAccess {
         try {
             conn.close();
         } catch (java.sql.SQLException e) {
-            System.out.println("[!] Errore nel chiudere la connessione: " + e.getMessage());
+            System.out.println("Errore nel chiudere la connessione: " + e.getMessage());
         }
     }
 }
