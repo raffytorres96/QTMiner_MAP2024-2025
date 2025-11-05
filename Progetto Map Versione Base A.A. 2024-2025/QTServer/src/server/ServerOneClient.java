@@ -162,7 +162,7 @@ public class ServerOneClient extends Thread {
                         handleLearningFromFile();
                         break;
 
-                    // Comandi Android Client (nuovi)
+                    // Comandi Android Client
                     case 10: 
                         handleStoreTableFromDb_Simple();
                         break;
@@ -268,42 +268,40 @@ public class ServerOneClient extends Thread {
         }
     }
         
-    /**
+/**
      * Gestisce il comando 1: esecuzione dell'algoritmo di clustering QT sui dati caricati.
      * <p>
      * <b>Protocollo di comunicazione:</b>
      * </p>
      * <ul>
-     *   <li><b>Input atteso</b>: Double rappresentante il raggio del clustering</li>
-     *   <li><b>Output in caso di successo</b>: 
-     *     <ol>
-     *       <li>Stringa "OK"</li>
-     *       <li>Integer rappresentante il numero di cluster generati</li>
-     *       <li>Stringa contenente la rappresentazione testuale dei cluster</li>
-     *     </ol>
-     *   </li>
-     *   <li><b>Output in caso di errore</b>: Stringa contenente il messaggio di errore</li>
+     * <li><b>Input atteso</b>: Double rappresentante il raggio del clustering</li>
+     * <li><b>Output in caso di successo</b>: 
+     * <ol>
+     * <li>Stringa "OK"</li>
+     * <li>Integer rappresentante il numero di cluster generati</li>
+     * <li>Stringa contenente la rappresentazione testuale dei cluster</li>
+     * </ol>
+     * </li>
+     * <li><b>Output in caso di errore</b>: Stringa contenente un messaggio di errore specifico</li>
      * </ul>
-     * 
-     * <p>
+     * * <p>
      * Il metodo verifica che sia stata precedentemente caricata una tabella (comando 0),
      * valida il raggio ricevuto, esegue il clustering utilizzando {@link QTMiner#compute(Data)},
      * e invia i risultati al client solo se l'operazione ha successo.
      * </p>
-     * 
-     * <h3>Prerequisiti</h3>
+     * * <h3>Prerequisiti</h3>
      * È necessario aver eseguito il comando 0 per caricare una tabella prima di invocare
      * questo comando, altrimenti viene lanciata un'eccezione {@code IllegalStateException}.
-     * 
-     * <h3>Gestione degli Errori</h3>
+     * * <h3>Gestione degli Errori</h3>
      * <ul>
-     *   <li><b>IllegalStateException</b>: Nessuna tabella caricata</li>
-     *   <li><b>IllegalArgumentException</b>: Raggio negativo o zero</li>
-     *   <li><b>ClusteringRadiusException</b>: Raggio troppo grande (tutte le tuple in un cluster)</li>
-     *   <li><b>EmptyDatasetException</b>: Dataset vuoto</li>
+     * <li><b>IllegalStateException</b>: Nessuna tabella caricata (messaggio inviato al client)</li>
+     * <li><b>IllegalArgumentException</b>: Raggio negativo o zero (messaggio inviato al client)</li>
+     * <li><b>ClusteringRadiusException</b>: Raggio troppo grande (messaggio specifico inviato al client)</li>
+     * <li><b>EmptyDatasetException</b>: Dataset vuoto (messaggio inviato al client)</li>
+     * <li><b>ClassNotFoundException</b>: Il client ha inviato un tipo di dato non valido per il raggio (messaggio inviato al client)</li>
+     * <li><b>IOException</b>: Errore di comunicazione (messaggio inviato al client)</li>
      * </ul>
-     * 
-     * @see QTMiner#QTMiner(double)
+     * * @see QTMiner#QTMiner(double)
      * @see QTMiner#compute(Data)
      * @see QTMiner#getC()
      */
@@ -320,7 +318,7 @@ public class ServerOneClient extends Thread {
             
             // Valida il raggio
             if (radius <= 0) {
-                throw new IllegalArgumentException("Il raggio deve essere maggiore di zero");
+                throw new IllegalArgumentException("Il raggio deve essere maggiore di zero.");
             }
             
             // Crea l'oggetto QTMiner ed esegui il clustering
@@ -345,12 +343,38 @@ public class ServerOneClient extends Thread {
             } catch (IOException ioException) {
                 System.err.println("Errore critico: impossibile comunicare con il client");
             }
-        } catch (ClassNotFoundException | IOException | EmptyDatasetException | 
-                IllegalStateException | IllegalArgumentException e) {
-            System.err.println("Errore nel learning: " + e.getMessage());
+
+            } catch (ClassNotFoundException | IOException | EmptyDatasetException | 
+                 IllegalStateException | IllegalArgumentException e) {
+            
+                System.err.println("Errore nel learning: " + e.getMessage());
+                
+                String errorMsg = "ERROR: ";
+
+                // Controlla il TIPO di errore per dare un messaggio valido
+                if (e instanceof IllegalStateException || 
+                    e instanceof IllegalArgumentException || 
+                    e instanceof EmptyDatasetException) {
+                    
+                    // Errori lanciati da noi
+                    errorMsg += e.getMessage();
+
+                } else if (e instanceof ClassNotFoundException) {
+                    // Errore di protocollo: il client ha inviato un tipo di dato errato
+                    errorMsg += "Il client ha inviato un tipo di dato non valido per il raggio (atteso Double).";
+
+                } else if (e instanceof IOException) {
+                    // Errore di connessione (es. il client si è chiuso)
+                    errorMsg += "Errore di comunicazione durante il clustering.";
+                
+                } else {
+                    // Fallback per qualsiasi altro errore
+                    String msg = e.getMessage();
+                    errorMsg += (msg != null ? msg : "Errore sconosciuto durante il clustering.");
+                }
             
             try {
-                out.writeObject("ERROR: " + e.getMessage());
+                out.writeObject(errorMsg);
                 out.flush();
             } catch (IOException ioException) {
                 System.err.println("Errore critico: impossibile comunicare con il client");
@@ -364,27 +388,24 @@ public class ServerOneClient extends Thread {
      * <b>Protocollo di comunicazione:</b>
      * </p>
      * <ul>
-     *   <li><b>Input atteso</b>: Stringa contenente il nome/percorso del file di destinazione</li>
-     *   <li><b>Output in caso di successo</b>: Stringa "OK"</li>
-     *   <li><b>Output in caso di errore</b>: Stringa "ERROR: " seguita dal messaggio di errore</li>
+     * <li><b>Input atteso</b>: Stringa contenente il nome/percorso del file di destinazione</li>
+     * <li><b>Output in caso di successo</b>: Stringa "OK"</li>
+     * <li><b>Output in caso di errore</b>: Stringa "ERROR: " seguita da un messaggio di errore specifico</li>
      * </ul>
-     * 
-     * <p>
+     * * <p>
      * Il metodo verifica che sia stato precedentemente eseguito un clustering (comando 1),
      * quindi salva i risultati su file utilizzando il metodo {@link QTMiner#salva(String)}.
      * </p>
-     * 
-     * <h3>Prerequisiti</h3>
+     * * <h3>Prerequisiti</h3>
      * È necessario aver eseguito il comando 1 per generare i cluster prima di invocare
      * questo comando, altrimenti viene lanciata un'eccezione {@code IllegalStateException}.
-     * 
-     * <h3>Gestione degli Errori</h3>
+     * * <h3>Gestione degli Errori</h3>
      * <ul>
-     *   <li><b>IllegalStateException</b>: Nessun clustering eseguito</li>
-     *   <li><b>IOException</b>: Errore durante la scrittura del file</li>
+     * <li><b>IllegalStateException</b>: Nessun clustering eseguito (messaggio inviato al client)</li>
+     * <li><b>IOException</b>: Errore durante la scrittura del file (messaggio inviato al client)</li>
+     * <li><b>ClassNotFoundException</b>: Il client ha inviato un tipo di dato non valido per il nome del file (messaggio inviato al client)</li>
      * </ul>
-     * 
-     * @see QTMiner#salva(String)
+     * * @see QTMiner#salva(String)
      */
     private void handleStoreClusterInFile() {
 	try {
@@ -404,12 +425,32 @@ public class ServerOneClient extends Thread {
 		out.flush();
 		System.out.println("Cluster salvati su file: " + fileName);
 		
-        } catch (ClassNotFoundException | IOException | IllegalStateException e) {
-            System.err.println("Errore nel salvataggio: " + e.getMessage());
-            e.printStackTrace();
+            } catch (ClassNotFoundException | IOException | IllegalStateException e) {
+                System.err.println("Errore nel salvataggio: " + e.getMessage());
+                e.printStackTrace();
+            
+                String errorMsg = "Errore: ";
+                
+                if (e instanceof IllegalStateException) {
+                    // Questo errore lo abbiamo lanciato noi
+                    errorMsg += e.getMessage();
+                
+                } else if (e instanceof ClassNotFoundException) {
+                    // Errore di protocollo: il client ha inviato un tipo di dato errato
+                    errorMsg += "Il client ha inviato un tipo di dato non valido per il nome del file.";
+
+                } else if (e instanceof IOException) {
+                    // Errore di I/O
+                    errorMsg += "Errore di I/O sul server. Impossibile scrivere il file.";
+                
+                } else {
+                    // Qualsiasi altro errore
+                    String msg = e.getMessage();
+                    errorMsg += (msg != null ? msg : "Errore sconosciuto durante il salvataggio.");
+                }
             
             try {
-                out.writeObject("ERROR: " + e.getMessage());
+                out.writeObject(errorMsg);
                 out.flush();
             } catch (IOException ioException) {
                 System.err.println("Errore critico: impossibile comunicare con il client");
@@ -469,7 +510,6 @@ public class ServerOneClient extends Thread {
                 throw new IllegalArgumentException("Nome file non valido");
             }
             
-            // QTMiner può lanciare FileNotFoundException, IOException, ClassNotFoundException
             kmeans = new QTMiner(fileName);
             
             // --- 4. INVIO RISPOSTA (SUCCESSO) ---
@@ -512,30 +552,81 @@ public class ServerOneClient extends Thread {
         }
     }
 
-/**
+    /**
      * Gestisce il COMANDO 10 (Android - Protocollo Semplice).
      * <p>
      * Carica i dati da una tabella specificata del database. Questo metodo è
      * necessario per inizializzare l'oggetto {@code data} prima di poter
      * eseguire operazioni di clustering (11) o caricamento da file (13).
      * </p>
+     * <p>
+     * A differenza del protocollo complesso, questo metodo invia una singola stringa
+     * come risposta.
+     * </p>
      * <b>Protocollo Semplice:</b>
      * <ul>
      * <li><b>Input Atteso:</b> String - Nome della tabella (es. "playtennis").</li>
-     * <li><b>Output:</b> String - "OK" in caso di successo, o "Errore: [messaggio]" in caso di fallimento.</li>
+     * <li><b>Output in caso di successo:</b> Stringa "OK".</li>
+     * <li><b>Output in caso di errore:</b> Stringa "Errore: " seguita da un messaggio specifico.</li>
      * </ul>
-     * * @see Data#Data(String)
+     *
+     * <h3>Gestione degli Errori</h3>
+     * <p>
+     * Il metodo intercetta le eccezioni e invia un messaggio chiaro al client:
+     * </p>
+     * <ul>
+     * <li><b>SQLException / DatabaseConnectionException</b>: Invia un messaggio generico per problemi di connessione al DB (es. MySQL spento, credenziali errate).</li>
+     * <li><b>EmptyDatasetException</b>: Comunica che la tabella è vuota.</li>
+     * <li><b>IllegalArgumentException / ClassNotFoundException</b>: Comunica un errore di input o di protocollo.</li>
+     * </ul>
+     *
+     * @see Data#Data(String)
      */
     private void handleStoreTableFromDb_Simple() {
+        String tableName = null;
         try {
-            String tableName = (String) in.readObject();
+            tableName = (String) in.readObject();
+            
             if (tableName == null || tableName.trim().isEmpty()) {
-                throw new IllegalArgumentException("Nome tabella non valido");
+                throw new IllegalArgumentException("Nome tabella non valido.");
             }
-            this.data = new Data(tableName);
+            
+            Data newData = new Data(tableName); // Chiama DbAccess.initConnection()
+            
+            System.out.println("Caricamento tabella (simple): " + tableName);
+        
+            this.data = newData;
+            
             out.writeObject("OK");
-        } catch (Exception e) {
-            try { out.writeObject("Errore: " + e.getMessage()); } catch (IOException ignore) {}
+            System.out.println("Tabella " + tableName + " (simple) caricata con successo (" + 
+                                data.getNumberOfExamples() + " esempi)");
+
+        } catch (ClassNotFoundException | IOException | EmptyDatasetException | 
+                 SQLException | DatabaseConnectionException | EmptySetException | 
+                 IllegalArgumentException e) {
+            
+            // Log dettagliato sul server (come nel metodo complesso)
+            System.err.println("Errore nel caricamento della tabella (simple): " + e.getMessage());
+            
+            try {
+                // Creazione messaggio di errore pulito (come nel metodo complesso)
+                String errorMsg = "Errore: ";
+                if (e instanceof SQLException || e instanceof DatabaseConnectionException) {
+                    errorMsg = "Errore: Server MySQL non in funzione o database non trovato.";
+                } else if (e instanceof EmptyDatasetException) {
+                    errorMsg = "Errore: La tabella '" + tableName + "' è vuota.";
+                } else {
+                    errorMsg += e.getMessage();
+                }
+                
+                // Invio errore (protocollo semplice)
+                out.writeObject(errorMsg);
+
+            } catch (IOException ioException) {
+                System.err.println("Errore critico (simple): impossibile comunicare con il client");
+                ioException.printStackTrace();
+            }
+
         } finally {
             try { out.flush(); } catch (IOException ignore) {}
         }
@@ -557,28 +648,67 @@ public class ServerOneClient extends Thread {
      * <ul>
      * <li>È necessario aver eseguito con successo il comando 10 per inizializzare l'oggetto {@code data}.</li>
      * </ul>
-     * * @see QTMiner#QTMiner(double)
+     *
+     * <h3>Gestione degli Errori</h3>
+     * <p>Il metodo intercetta le eccezioni e invia un messaggio chiaro al client:</p>
+     * <ul>
+     * <li><b>ClusteringRadiusException</b>: Invia un messaggio specifico se il raggio è troppo grande.</li>
+     * <li><b>IllegalStateException</b>: Se la tabella non è stata caricata (<code>data</code> è <code>null</code>).</li>
+     * <li><b>IllegalArgumentException</b>: Se il raggio è <code>&lt;= 0</code>.</li>
+     * <li><b>ClassNotFoundException</b>: Se il client invia un tipo di dato errato.</li>
+     * </ul>
+     *
+     * @see QTMiner#QTMiner(double)
      * @see QTMiner#compute(Data)
      */
     private void handleLearningFromDbTable_Simple() {
         try {
-            // --- 1. LEGGE L'INPUT PRIMA DI TUTTO ---
             double radius = (double) in.readObject();
+            
+            System.out.println("Esecuzione clustering (simple) con raggio: " + radius);
 
-            // --- 2. ORA FA I CONTROLLI ---
             if (data == null) {
                 throw new IllegalStateException("Nessuna tabella caricata. Eseguire prima il comando 10.");
             }
             if (radius <= 0) {
-                throw new IllegalArgumentException("Il raggio deve essere maggiore di zero");
+                throw new IllegalArgumentException("Il raggio deve essere maggiore di zero.");
             }
 
             kmeans = new QTMiner(radius);
-            kmeans.compute(data);
-            out.writeObject(kmeans.getC().toString(data)); // Invia stringa di successo
+            int numClusters = kmeans.compute(data); // Può lanciare ClusteringRadiusException
             
+            String clusterString = kmeans.getC().toString(data);
+            String modifiedString = clusterString.replaceAll("(?m)^AvgDistance.*", "$0\n");
+            out.writeObject(modifiedString); // Invia stringa di successo
+            
+            System.out.println("Clustering completato (simple): " + numClusters + " cluster generati");
+            
+        } catch (ClusteringRadiusException e) {
+            // --- GESTIONE ERRORE SPECIFICO ---
+            System.err.println("Errore nel learning (simple): " + e.getMessage());
+            try { 
+                out.writeObject("Errore: Raggio troppo alto. Prova con un valore più piccolo."); 
+            } catch (IOException ignore) {} // Invia stringa di errore specifica
+
         } catch (Exception e) {
-            try { out.writeObject("Errore: " + e.getMessage()); } catch (IOException ignore) {} // Invia stringa di errore
+            // --- GESTIONE ERRORE GENERICO ---
+            System.err.println("Errore nel learning (simple): " + e.getMessage());
+            String errorMsg = "Errore: ";
+            
+            if (e instanceof IllegalStateException || e instanceof IllegalArgumentException) {
+                errorMsg += e.getMessage(); // Usa il messaggio chiaro
+            } else if (e instanceof ClassNotFoundException) {
+                errorMsg += "Il client ha inviato un tipo di dato non valido per il raggio.";
+            } else if (e instanceof IOException) {
+                errorMsg += "Errore di comunicazione durante il clustering.";
+            } else {
+                errorMsg += (e.getMessage() != null ? e.getMessage() : "Errore sconosciuto.");
+            }
+            
+            try { 
+                out.writeObject(errorMsg); 
+            } catch (IOException ignore) {}
+        
         } finally {
             try { out.flush(); } catch (IOException ignore) {}
         }
@@ -599,27 +729,54 @@ public class ServerOneClient extends Thread {
      * <ul>
      * <li>È necessario aver eseguito con successo il comando 11 o 13 per inizializzare l'oggetto {@code kmeans}.</li>
      * </ul>
-     * * @see QTMiner#salva(String)
+     *
+     * <h3>Gestione degli Errori</h3>
+     * <ul>
+     * <li><b>IllegalStateException</b>: Se non è stato eseguito nessun clustering.</li>
+     * <li><b>IllegalArgumentException</b>: Se il nome del file è nullo o vuoto.</li>
+     * <li><b>IOException</b>: Se si verifica un errore durante la scrittura del file sul server.</li>
+     * <li><b>ClassNotFoundException</b>: Se il client invia un tipo di dato errato.</li>
+     * </ul>
+     *
+     * @see QTMiner#salva(String)
      */
     private void handleStoreClusterInFile_Simple() {
         String fileName = null;
         try {
-            // --- 1. LEGGE L'INPUT PRIMA DI TUTTO ---
             fileName = (String) in.readObject();
 
-            // --- 2. ORA FA I CONTROLLI ---
+            System.out.println("Salvataggio cluster (simple) su file: " + fileName);
+
             if (kmeans == null) {
                 throw new IllegalStateException("Nessun clustering eseguito. Eseguire prima il clustering (comando 11).");
             }
             if (fileName == null || fileName.trim().isEmpty()) {
-                throw new IllegalArgumentException("Nome file non valido");
+                throw new IllegalArgumentException("Nome file non valido.");
             }
 
             kmeans.salva(fileName);
             out.writeObject("OK"); // Invia stringa di successo
             
+            System.out.println("Cluster salvati (simple) con successo.");
+            
         } catch (Exception e) {
-            try { out.writeObject("Errore: " + e.getMessage()); } catch (IOException ignore) {} // Invia stringa di errore
+            // --- GESTIONE ERRORE ---
+            System.err.println("Errore nel salvataggio (simple): " + e.getMessage());
+            String errorMsg = "Errore: ";
+            
+            if (e instanceof IllegalStateException || e instanceof IllegalArgumentException) {
+                errorMsg += e.getMessage(); // Usa il messaggio chiaro
+            } else if (e instanceof ClassNotFoundException) {
+                errorMsg += "Il client ha inviato un tipo di dato non valido per il nome del file.";
+            } else if (e instanceof IOException) {
+                errorMsg += "Errore di I/O sul server. Impossibile scrivere il file.";
+            } else {
+                errorMsg += (e.getMessage() != null ? e.getMessage() : "Errore sconosciuto durante il salvataggio.");
+            }
+
+            try { 
+                out.writeObject(errorMsg); 
+            } catch (IOException ignore) {}
         } finally {
             try { out.flush(); } catch (IOException ignore) {}
         }
@@ -642,33 +799,58 @@ public class ServerOneClient extends Thread {
      * <ul>
      * <li>È necessario aver eseguito con successo il comando 10 per inizializzare l'oggetto {@code data}.</li>
      * </ul>
-     * * @see QTMiner#QTMiner(String)
+     *
+     * <h3>Gestione degli Errori</h3>
+     * <ul>
+     * <li><b>IllegalStateException</b>: Se la tabella non è stata caricata (<code>data</code> è <code>null</code>).</li>
+     * <li><b>IllegalArgumentException</b>: Se il nome del file è nullo o vuoto.</li>
+     * <li><b>FileNotFoundException</b>: Se il file non viene trovato sul server.</li>
+     * <li><b>IOException / ClassNotFoundException</b>: Se il file è corrotto o si verifica un errore di I/O.</li>
+     * </ul>
+     *
+     * @see QTMiner#QTMiner(String)
      */
     private void handleLearningFromFile_Simple() {
         String fileName = null;
         try {
-            // --- 1. LEGGI L'INPUT ---
-            // Il client invia il nome del file in ogni caso,
-            // quindi bisogna leggerlo per pulire lo stream.
             fileName = (String) in.readObject(); 
 
-            // --- 2. ORA FAI I CONTROLLI ---
+            System.out.println("Caricamento cluster (simple) dal file: " + fileName);
+
             if (data == null) {
                 throw new IllegalStateException("Nessuna tabella caricata. Eseguire prima 'Clustering da tabella' almeno una volta.");
             }
             if (fileName == null || fileName.trim().isEmpty()) {
-                throw new IllegalArgumentException("Nome file non valido");
+                throw new IllegalArgumentException("Nome file non valido.");
             }
             
             kmeans = new QTMiner(fileName);
-            out.writeObject(kmeans.getC().toString(data)); // Invia stringa di successo
             
+            String clusterString = kmeans.getC().toString(data);
+            String modifiedString = clusterString.replaceAll("(?m)^AvgDistance.*", "$0\n");
+            out.writeObject(modifiedString); // Invia stringa di successo
+            
+            System.out.println("Cluster caricati (simple) con successo.");
+
         } catch (Exception e) {
-            String errorMsg = "Errore: " + e.getMessage();
+            // --- GESTIONE ERRORE ---
+            System.err.println("Errore nel caricamento da file (simple): " + e.getMessage());
+            String errorMsg = "Errore: ";
+
             if (e instanceof java.io.FileNotFoundException) {
                 errorMsg = "Errore: File '" + fileName + "' non trovato sul server.";
+            } else if (e instanceof IllegalStateException || e instanceof IllegalArgumentException) {
+                errorMsg += e.getMessage(); // Usa il nostro messaggio chiaro
+            } else if (e instanceof ClassNotFoundException || e instanceof IOException) {
+                errorMsg += "Errore di I/O o file corrotto. Impossibile leggere il file cluster.";
+            } else {
+                errorMsg += (e.getMessage() != null ? e.getMessage() : "Errore sconosciuto durante il caricamento.");
             }
-            try { out.writeObject(errorMsg); } catch (IOException ignore) {} // Invia stringa di errore
+
+            try { 
+                out.writeObject(errorMsg); 
+            } catch (IOException ignore) {}
+        
         } finally {
             try { out.flush(); } catch (IOException ignore) {}
         }
