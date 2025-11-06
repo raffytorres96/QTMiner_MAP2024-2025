@@ -1,0 +1,7 @@
+STRUTTURA DELLA CONSEGNA
+
+- Nelle cartelle QTServer e QTClient, all'interno della cartella "Progetto Map Versione Base A.A. 2024-2025", è presente il codice sorgente del progetto Java (Server e Client).
+
+- Nella cartella "Progetto Map Estensione A.A. 2024-2025" sono presenti i file del progetto Android Studio, inerenti all'estensione mobile.
+
+- Nella cartella Report sono presenti i file JavaDoc, gli eseguibili (.jar e .apk), il file d'avvio 'start.bat', le immagini relative ai grafici UML e il Manuale Utente.
