@@ -10,9 +10,7 @@ import java.io.Serializable;
  * ({@link ContinuousAttribute}) e attributi discreti ({@link DiscreteAttribute}).</p>
  * 
  * <p>Implementa {@link Serializable} per permettere la serializzazione degli attributi.</p>
- * 
- * @author [Il tuo nome]
- * @version 1.0
+ *
  * @see ContinuousAttribute
  * @see DiscreteAttribute
  */
@@ -35,7 +33,7 @@ public abstract class Attribute implements Serializable {
      * @param name il nome identificativo dell'attributo
      * @param index la posizione dell'attributo nello schema (parte da 0)
      */
-    protected Attribute(String name, int index) {
+    Attribute(String name, int index) {
         this.name = name;
         this.index = index;
     }
@@ -45,7 +43,7 @@ public abstract class Attribute implements Serializable {
      * 
      * @return il nome dell'attributo
      */
-    public String getName() {
+    String getName() {
         return name;
     }
 
@@ -56,7 +54,7 @@ public abstract class Attribute implements Serializable {
      * 
      * @return l'indice dell'attributo (posizione nello schema)
      */
-    public int getIndex() {
+    int getIndex() {
         return index;
     }
 
