@@ -104,8 +104,19 @@ public class QTMiner implements Serializable {
      * <li><b>Selezione del miglior candidato</b>: Seleziona il cluster candidato più popoloso.</li>
      * <li><b>Aggiornamento stato</b>: Marca gli indici delle tuple del cluster 
      * selezionato come già clusterizzati.</li>
-     * <li><b>Iterazione</b>: Ripete finché tutte le tuple sono state assegnate.</li>
+     * <li><b>Iterazione</b>: Ripete finché tutte le tuple sono state assegnate
+     * <b>o finché non è più possibile formare nuovi cluster</b> (il cluster 
+     * migliore restituito è vuoto, ad es. a causa di un raggio non valido).</li>
      * </ol>
+     * </p>
+     * <p>
+     * Questa logica impedisce loop infiniti nel caso in cui il clustering non
+     * riesca a progredire.
+     * </p>
+     * * <h3>Validazione del Raggio</h3>
+     * <p>
+     * Se tutte le tuple finiscono in un unico cluster, il raggio è troppo grande
+     * e viene lanciata {@link ClusteringRadiusException}.
      * </p>
      * * @param data l'oggetto {@link Data} contenente il dataset da clusterizzare.
      * @return il numero totale di cluster generati dall'algoritmo.
