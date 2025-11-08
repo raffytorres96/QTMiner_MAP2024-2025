@@ -1,5 +1,6 @@
 package database;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +15,7 @@ import java.util.List;
  * 
  * @see Comparable
  */
-public class Example implements Comparable<Example>{
+public class Example implements Comparable<Example>, Serializable{
 
     /**
      * Lista di oggetti (attributi) che compongono il singolo esempio (transazione).

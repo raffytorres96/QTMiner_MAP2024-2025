@@ -6,7 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -31,7 +30,7 @@ public class Table_Schema {
     /**
      * Elenco delle colonne che compongono lo schema della tabella.
      */
-    List<Column> tableSchema = new ArrayList<Column>();
+    private List<Column> tableSchema = new ArrayList<Column>();
     
     /**
      * Rappresenta una singola colonna dello schema di tabella.
@@ -58,7 +57,7 @@ public class Table_Schema {
          * @param name il nome della colonna nel database
          * @param type il tipo Java semplificato ("string" o "number")
          */
-        Column(String name, String type){
+        public Column(String name, String type){
             this.name = name;
             this.type = type;
         }

@@ -4,8 +4,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -183,11 +181,6 @@ public class Table_Data {
                 value = rs.getFloat(1);
             else
                 value = rs.getString(1);
-        }
-        else {
-            rs.close();
-            statement.close();
-            throw new NoValueException("Nessun dato trovato nella tabella " + table + " per la colonna " + column.getColumnName());
         }
 
         rs.close();
