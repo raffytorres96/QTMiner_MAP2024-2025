@@ -45,7 +45,7 @@ public class MultiServer {
      * l'errore viene loggato ma il server continua a rimanere in ascolto.
      * </p>
      */
-    public void run() {
+    private void run() {
         ServerSocket serverSocket = null;
         
         try {
