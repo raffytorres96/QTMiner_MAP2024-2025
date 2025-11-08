@@ -102,11 +102,32 @@ public class Tuple implements Serializable {
      * @throws ArithmeticException se clusteredData è vuoto (divisione per zero)
      * @throws NullPointerException se clusteredData è null
      */
-    public double avgDistance(Data data, Set<Tuple> clusteredData) {
-        double sumD = 0.0;
-        for (Tuple t : clusteredData) {
-            sumD += this.getDistance(t);
+    public double avgDistance(Data data, Set<Integer> clusteredData) {
+        double p = 0.0;
+		double sumD = 0.0;
+		for (Integer it : clusteredData) {
+			double d = getDistance(data.getItemSet(it));
+			sumD += d;
+		}
+		p = sumD / clusteredData.size();
+		return p;
+    }
+
+    /**
+     * Restituisce una rappresentazione testuale della Tupla.
+     * <p>
+     * Gli Item della tupla vengono concatenati in un'unica stringa,
+     * separati da uno spazio.
+     * </p>
+     *
+     * @return la stringa che rappresenta la tupla
+     */
+    @Override
+    public String toString() {
+        String str = "";
+        for (Item item : tuple) {
+            str += item.toString() + " ";
         }
-        return sumD / clusteredData.size();
+        return str;
     }
 }

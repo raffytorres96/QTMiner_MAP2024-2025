@@ -1,7 +1,9 @@
 package mining;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
 import data.Data;
 
 /**
@@ -39,7 +41,7 @@ public class ClusterSet implements Iterable<Cluster>, Serializable {
      * </ul>
      * </p>
      */
-    private Set<Cluster> C = new TreeSet<>();
+    private Set<Cluster> C = new TreeSet<Cluster>();
 
     /**
      * Costruisce un nuovo insieme di cluster vuoto.
@@ -47,7 +49,9 @@ public class ClusterSet implements Iterable<Cluster>, Serializable {
      * I cluster possono essere successivamente aggiunti utilizzando il metodo {@link #add(Cluster)}.
      * </p>
      */
-    public ClusterSet(){}
+    public ClusterSet(){
+        C = new TreeSet<Cluster>();
+    }
 
     /**
      * Aggiunge un cluster all'insieme dei cluster.
@@ -59,7 +63,7 @@ public class ClusterSet implements Iterable<Cluster>, Serializable {
      * 
      * @param c il cluster da aggiungere. Non può essere {@code null}.
      */
-    public void add(Cluster c){
+    void add(Cluster c){
         C.add(c);
     }
 

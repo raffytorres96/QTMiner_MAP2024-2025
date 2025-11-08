@@ -3,251 +3,213 @@ package mining;
 import data.Data;
 import data.Tuple;
 import java.io.Serializable;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Rappresenta un cluster di dati nel contesto di algoritmi di clustering.
  * <p>
- * Un cluster è definito da un <b>centroide</b> (punto rappresentativo centrale) e contiene
- * un insieme di tuple (esempi) che sono state assegnate a quel cluster in base a criteri
- * di similarità o distanza. La classe fornisce metodi per gestire l'aggiunta, la rimozione
- * e la verifica della presenza di tuple nel cluster.
+ * Un cluster è definito da un <b>centroide</b> (un oggetto {@link Tuple}) e
+ * contiene un insieme di <b>indici</b> che puntano alle tuple (nel dataset {@link Data})
+ * assegnate a questo cluster.
  * </p>
  * <p>
- * La classe implementa {@link Iterable} per permettere l'iterazione sulle tuple contenute,
- * {@link Comparable} per confrontare cluster in base alla loro dimensione (numero di tuple),
+ * La classe implementa {@link Iterable} per permettere l'iterazione sugli indici contenuti,
+ * {@link Comparable} per confrontare cluster in base alla loro popolosità (dimensione),
  * e {@link Serializable} per consentire la persistenza su file.
  * </p>
  * <p>
- * L'unicità delle tuple all'interno del cluster è garantita dall'uso di {@link HashSet}.
+ * L'unicità degli indici all'interno del cluster è garantita dall'uso di {@link HashSet}.
  * </p>
- * 
- * @see Tuple
+ * * @see Tuple
+ * @see Data
  * @see ClusterSet
  * @see QTMiner
  */
-public class Cluster implements Iterable<Tuple>, Comparable<Cluster>, Serializable {
-	/**
-	 * Il centroide del cluster, rappresentato da un oggetto {@link Tuple}.
-	 * Il centroide è il punto centrale o rappresentativo del cluster, utilizzato
-	 * per determinare l'appartenenza di nuove tuple al cluster in base alla distanza.
-	 */
-	private Tuple centroid;
-	
-	/**
-	 * Un insieme di tuple ({@link Set}) che sono state assegnate a questo cluster.
-	 * L'uso di {@link HashSet} garantisce l'unicità delle tuple all'interno del cluster
-	 * e operazioni di inserimento e ricerca efficienti in tempo O(1) medio.
-	 */
-	private Set<Tuple> clusteredData;
+class Cluster implements Iterable<Integer>, Comparable<Cluster>, Serializable {
+    /**
+     * Il centroide del cluster, rappresentato da un oggetto {@link Tuple}.
+     * Il centroide è il punto centrale o rappresentativo del cluster.
+     */
+    private Tuple centroid;
+    
+    /**
+     * Un insieme di <b>indici</b> ({@link Set}) che puntano alle tuple nel dataset
+     * che sono state assegnate a questo cluster.
+     * <p>
+     * L'uso di {@link HashSet} garantisce l'unicità degli indici e operazioni
+     * di inserimento e ricerca efficienti.
+     * </p>
+     */
+    private Set<Integer> clusteredData;
 
-	/**
-	 * Costruisce un nuovo cluster con il centroide specificato.
-	 * <p>
-	 * Inizializza un cluster vuoto (senza tuple) con il centroide dato.
-	 * Le tuple possono essere successivamente aggiunte tramite il metodo {@link #addData(Tuple)}.
-	 * </p>
-	 * 
-	 * @param centroid la tupla che rappresenta il centroide del nuovo cluster.
-	 *                 Non può essere {@code null}.
-	 * @throws NullPointerException se centroid è null
-	 */
-	public Cluster(Tuple centroid){
-		if (centroid == null) {
-			throw new NullPointerException("Centroid cannot be null");
-		}
-		this.centroid = centroid;
-		this.clusteredData = new HashSet<>();
-		
-	}
+    /**
+     * Costruisce un nuovo cluster con il centroide specificato.
+     * <p>
+     * Inizializza un cluster vuoto (senza indici) con il centroide dato.
+     * Gli indici delle tuple possono essere successivamente aggiunti tramite
+     * il metodo {@link #addData(int)}.
+     * </p>
+     * * @param centroid la tupla che rappresenta il centroide del nuovo cluster.
+     * Non può essere {@code null}.
+     * @throws NullPointerException se centroid è null
+     */
+    Cluster(Tuple centroid){
+        if (centroid == null) {
+            throw new NullPointerException("Il Centroide non può essere nullo");
+        }
+        this.centroid = centroid;
+        this.clusteredData = new HashSet<Integer>();
+        
+    }
 
-	/**
-	 * Restituisce il centroide di questo cluster.
-	 * 
-	 * @return la tupla che rappresenta il centroide del cluster.
-	 */		
-	Tuple getCentroid(){
-		return centroid;
-	}
-	
-	/**
-	 * Aggiunge una tupla all'insieme dei dati clusterizzati.
-	 * <p>
-	 * Se la tupla è già presente nel cluster (in base all'implementazione di {@code equals()}
-	 * di {@link Tuple}), non viene aggiunta nuovamente.
-	 * </p>
-	 * 
-	 * @param tuple la tupla da aggiungere al cluster. Non può essere {@code null}.
-	 * @return {@code true} se la tupla è stata aggiunta con successo (cioè non era già presente),
-	 *         {@code false} se la tupla era già contenuta nel cluster.
-	 */
-	public boolean addData(Tuple tuple){
-		return clusteredData.add(tuple);
-	}
-	
-	/**
-	 * Verifica se una tupla è contenuta in questo cluster.
-	 * 
-	 * @param tuple la tupla da cercare. Non può essere {@code null}.
-	 * @return {@code true} se la tupla è presente nell'insieme dei dati clusterizzati,
-	 *         {@code false} altrimenti.
-	 */
-	private boolean contain(Tuple tuple){
-		return clusteredData.contains(tuple);
-	}
+    /**
+     * Restituisce il centroide di questo cluster.
+     * * @return la tupla che rappresenta il centroide del cluster.
+     */     
+    Tuple getCentroid(){
+        return centroid;
+    }
+    
+    /**
+     * Aggiunge l'indice di una tupla all'insieme dei dati clusterizzati.
+     * <p>
+     * Se l'indice è già presente nel cluster, non viene aggiunto nuovamente.
+     * </p>
+     * * @param id l'indice della tupla da aggiungere al cluster.
+     * @return {@code true} se l'indice è stato aggiunto con successo (cioè non era già presente),
+     * {@code false} se l'indice era già contenuto nel cluster.
+     */
+    boolean addData(int id){
+        return clusteredData.add(id);
+    }
+    
+    /**
+     * Verifica se l'indice di una tupla è contenuto in questo cluster.
+     * * @param id l'indice della tupla da cercare.
+     * @return {@code true} se l'indice è presente nell'insieme dei dati clusterizzati,
+     * {@code false} altrimenti.
+     */
+    boolean contain(int id){
+        return clusteredData.contains(id);
+    }
 
-	/**
-	 * Rimuove una tupla dall'insieme dei dati clusterizzati.
-	 * <p>
-	 * Questo metodo è utile quando una tupla deve essere riassegnata a un altro cluster
-	 * durante operazioni di reclusterizzazione o raffinamento.
-	 * </p>
-	 * 
-	 * @param tuple la tupla da rimuovere dal cluster. Se la tupla non è presente,
-	 *              l'operazione non ha effetto.
-	 */
-	private void removeTuple(Tuple tuple){
-		clusteredData.remove(tuple);
-		
-	}
+    /**
+     * Rimuove l'indice di una tupla dall'insieme dei dati clusterizzati.
+     * <p>
+     * Questo metodo è utile quando una tupla deve essere riassegnata a un altro cluster
+     * durante operazioni di reclusterizzazione o raffinamento.
+     * </p>
+     * * @param id l'indice della tupla da rimuovere dal cluster. Se l'indice non è presente,
+     * l'operazione non ha effetto.
+     */
+    void removeTuple(int id){
+        clusteredData.remove(id);
+    }
 
-	/**
-	 * Restituisce il numero di tuple presenti in questo cluster.
-	 * <p>
-	 * La dimensione del cluster è un indicatore della sua "densità" e viene utilizzata
-	 * per confrontare cluster tramite il metodo {@link #compareTo(Cluster)}.
-	 * </p>
-	 * 
-	 * @return la dimensione del cluster (numero di tuple contenute).
-	 */
-	int getSize(){
-		return clusteredData.size();
-	}
+    /**
+     * Restituisce il numero di indici (e quindi di tuple) presenti in questo cluster.
+     * <p>
+     * La dimensione del cluster è un indicatore della sua "popolosità" e viene utilizzata
+     * per confrontare cluster tramite il metodo {@link #compareTo(Cluster)}.
+     * </p>
+     * * @return la dimensione del cluster (numero di indici contenuti).
+     */
+    int getSize(){
+        return clusteredData.size();
+    }
 
-	/**
-	 * Restituisce un iteratore sulle tuple contenute in questo cluster.
-	 * <p>
-	 * Permette di iterare su tutte le tuple del cluster utilizzando il costrutto
-	 * {@code for-each} o manualmente tramite l'iteratore.
-	 * </p>
-	 * 
-	 * @return un {@code Iterator<Tuple>} per l'insieme dei dati clusterizzati.
-	 */
-	public Iterator<Tuple> iterator() {
+    /**
+     * Restituisce un iteratore sugli <b>indici</b> delle tuple contenute in questo cluster.
+     * <p>
+     * Permette di iterare su tutti gli indici ({@code Integer}) del cluster utilizzando
+     * il costrutto {@code for-each} o manualmente tramite l'iteratore.
+     * </p>
+     * * @return un {@code Iterator<Integer>} per l'insieme degli indici.
+     */
+    public Iterator<Integer> iterator() {
         return clusteredData.iterator();
-	}
+    }
 
-	/**
-	 * Compara questo cluster con un altro cluster.
-	 * <p>
-	 * Il confronto avviene in due fasi:
-	 * <ol>
-	 *   <li><b>Confronto per dimensione</b>: Il cluster con più tuple è considerato "maggiore"</li>
-	 *   <li><b>Confronto lessicografico sui centroidi</b>: Se le dimensioni sono uguali,
-	 *       si confrontano i valori degli attributi dei centroidi, attributo per attributo</li>
-	 * </ol>
-	 * </p>
-	 * <p>
-	 * Questo metodo garantisce:
-	 * <ul>
-	 *   <li>Un ordinamento totale dei cluster</li>
-	 *   <li>Consistenza con {@code equals} (assumendo che equals sia implementato correttamente)</li>
-	 *   <li>Comportamento corretto in strutture dati ordinate come {@link TreeSet}</li>
-	 * </ul>
-	 * </p>
-	 * <p>
-	 * <b>Nota:</b> Il metodo rispetta il contratto di {@link Comparable}, restituendo
-	 * 0 quando i cluster hanno la stessa dimensione e centroidi identici.
-	 * </p>
-	 * 
-	 * @param o l'oggetto {@code Cluster} con cui confrontare.
-	 * @return un valore negativo se questo cluster è "minore" dell'altro,
-	 *         zero se i cluster sono uguali in dimensione e centroide,
-	 *         un valore positivo se questo cluster è "maggiore" dell'altro.
-	 * @throws NullPointerException se o è null
-	 */
-	public int compareTo(Cluster o) {
-		if (o == null) {
-			throw new NullPointerException("Cannot compare to null cluster");
-		}
-		
-		// Prima fase: confronto per dimensione
-		int sizeComparison = Integer.compare(this.getSize(), o.getSize());
-		if (sizeComparison != 0) {
-			return sizeComparison;
-		}
-		
-		// Seconda fase: confronto lessicografico sui centroidi
-		for (int i = 0; i < centroid.getLength(); i++) {
-			Object thisValue = this.centroid.get(i);
-			Object otherValue = o.centroid.get(i);
-			
-			// Confronto basato sulla rappresentazione testuale
-			int valueComparison = thisValue.toString().compareTo(otherValue.toString());
-			if (valueComparison != 0) {
-				return valueComparison;
-			}
-		}
-		
-		// I cluster hanno stessa dimensione e centroidi identici
-		return 0;
-	}
-	
-	/**
-	 * Restituisce una rappresentazione in formato stringa del centroide del cluster.
-	 * <p>
-	 * Formato di output: {@code Centroid=(v1v2...vn)} dove {@code v1, v2, ..., vn}
-	 * sono i valori degli attributi del centroide concatenati senza spazi.
-	 * </p>
-	 * 
-	 * @return una stringa che rappresenta il centroide nel formato specificato.
-	 */
-	public String toString(){
-		String str="Centroid=(";
-		for(int i = 0; i < centroid.getLength(); i++)
-			str += centroid.get(i);
-		str += ")";
-		return str;	
-	}
-	
-	/**
-	 * Restituisce una rappresentazione dettagliata del cluster in formato stringa.
-	 * <p>
-	 * Include il centroide, tutte le tuple appartenenti al cluster con le loro
-	 * distanze dal centroide, e la distanza media di tutte le tuple dal centroide.
-	 * </p>
-	 * <p>
-	 * Formato di output:
-	 * <pre>
-	 * Centroid=(v1 v2 ... vn)
-	 * Examples:
-	 * [t1_v1 t1_v2 ... ] dist=d1
-	 * [t2_v1 t2_v2 ... ] dist=d2
-	 * ...
-	 * AvgDistance=avg
-	 * </pre>
-	 * </p>
-	 * 
-	 * @param data l'oggetto {@link Data} da cui provengono le tuple, utilizzato
-	 *             per calcoli di distanza e medie.
-	 * @return una stringa dettagliata che rappresenta il cluster con tutte le informazioni.
-	 * @see Tuple#getDistance(Tuple)
-	 * @see Tuple#avgDistance(Data, Set)
-	 */
-	public String toString(Data data){
+    /**
+     * Compara questo cluster con un altro cluster esclusivamente in base alla popolosità (dimensione).
+     * <p>
+     * Se la dimensione di questo cluster è maggiore di quella dell'altro, restituisce +1.
+     * Se è minore o uguale, restituisce -1.
+     * </p>
+     * * @param o l'oggetto {@code Cluster} con cui confrontare.
+     * @return +1 se questo cluster è più popoloso, -1 se è meno popoloso o ugualmente popoloso.
+     * @throws NullPointerException se o è null
+     */
+    @Override
+    public int compareTo(Cluster o) {
+        if (o == null) {
+            throw new NullPointerException("Non si può confrontare un centroide vuoto");
+        }
+        
+        if (clusteredData.size() > o.clusteredData.size()) {
+            return +1;
+        } else {
+            return -1;
+        }
+    }
+    
+    /**
+     * Restituisce una rappresentazione in formato stringa del centroide del cluster.
+     * <p>
+     * Formato di output: {@code Centroid=(v1v2...vn)} dove {@code v1, v2, ..., vn}
+     * sono i valori degli attributi del centroide concatenati senza spazi.
+     * </p>
+     * * @return una stringa che rappresenta il centroide nel formato specificato.
+     */
+    public String toString(){
+        String str="Centroid=(";
+        for(int i = 0; i < centroid.getLength(); i++)
+            str += centroid.get(i);
+        str += ")";
+        return str; 
+    }
+    
+    /**
+     * Restituisce una rappresentazione dettagliata del cluster in formato stringa.
+     * <p>
+     * Include il centroide, tutte le tuple (recuperate tramite indice da {@code data})
+     * appartenenti al cluster con le loro distanze dal centroide, e la distanza
+     * media di tutte le tuple dal centroide.
+     * </p>
+     * <p>
+     * Formato di output:
+     * <pre>
+     * Centroid=(v1 v2 ... vn)
+     * Examples:
+     * [t1_v1 t1_v2 ... ] dist=d1
+     * [t2_v1 t2_v2 ... ] dist=d2
+     * ...
+     * AvgDistance=avg
+     * </pre>
+     * </p>
+     * * @param data l'oggetto {@link Data} da cui provengono le tuple, utilizzato
+     * per recuperare le tuple effettive a partire dai loro indici
+     * e per calcoli di distanza e medie.
+     * @return una stringa dettagliata che rappresenta il cluster con tutte le informazioni.
+     * @see Tuple#getDistance(Tuple)
+     * @see Tuple#avgDistance(Data, Set)
+     */
+    public String toString(Data data){
     String str = "Centroid=(";
     for(int i = 0; i < centroid.getLength(); i++)
         str += centroid.get(i) + " ";
     str += ")\nExamples:\n";
 
-    for (Tuple t : clusteredData) {
+    for (Integer it: clusteredData) {
+        Tuple t = data.getItemSet(it);
         str += "[";
-        for (int j = 0; j < t.getLength(); j++)
-            str += t.get(j) + " ";
+        str += t.toString();
         str += "] dist=" + getCentroid().getDistance(t) + "\n";
     }
-	
+    
     str += "\nAvgDistance=" + getCentroid().avgDistance(data, clusteredData);
     return str;
-	}	
+    }   
 }
