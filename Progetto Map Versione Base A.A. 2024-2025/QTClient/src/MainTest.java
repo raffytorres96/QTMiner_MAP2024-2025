@@ -142,24 +142,6 @@ public class MainTest {
 	 * @throws IOException se si verifica un errore di I/O durante la comunicazione
 	 * @throws ClassNotFoundException se la classe dell'oggetto ricevuto non viene trovata
 	 */
-	// 	private String learningFromDbTable() throws SocketException,ServerException,IOException,ClassNotFoundException{
-	// 	out.writeObject(1);
-	// 	double r=1.0;
-	// 	do{
-	// 		System.out.print("Radius:");
-	// 		r=Keyboard.readDouble();
-	// 	} while(r<=0);
-	// 	out.writeObject(r);
-	// 	String result = (String)in.readObject();
-	// 	if(result.equals("OK")){
-	// 		System.out.println("Number of Clusters:"+in.readObject());
-	// 		return (String)in.readObject();
-	// 	}
-	// 	else throw new ServerException(result);
-		
-		
-	// }
-
 	private int learningFromDbTable() throws SocketException, ServerException, IOException, ClassNotFoundException{
         out.writeObject(1);
         double r = 1.0;
@@ -179,7 +161,6 @@ public class MainTest {
             System.out.println("Numero cluster:" + numClusters);
             System.out.println(clusterString);
             
-            // Ritorna il CONTEGGIO
             return numClusters; 
         } else {
             throw new ServerException(result);
