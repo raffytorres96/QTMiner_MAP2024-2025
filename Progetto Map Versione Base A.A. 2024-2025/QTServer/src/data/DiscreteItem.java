@@ -9,8 +9,6 @@ package data;
  * utilizzando la metrica binaria: distanza 0 se i valori sono uguali,
  * distanza 1 se i valori sono diversi.</p>
  * 
- * @author [Il tuo nome]
- * @version 1.0
  * @see Item
  * @see DiscreteAttribute
  */
@@ -24,7 +22,7 @@ public class DiscreteItem extends Item {
      * @param attribute l'attributo discreto associato all'item (deve essere un'istanza di {@link DiscreteAttribute})
      * @param value il valore simbolico (stringa) dell'item
      */
-    public DiscreteItem(DiscreteAttribute attribute, String value) {
+    DiscreteItem(DiscreteAttribute attribute, String value) {
         super(attribute, value);
     }
 

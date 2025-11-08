@@ -1,6 +1,7 @@
 package data;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.TreeSet;
 
 /**
  * La classe DiscreteAttribute estende la classe astratta {@link Attribute}
@@ -14,8 +15,6 @@ import java.util.*;
  * <p>Esempi di attributi discreti: colore (rosso, verde, blu), taglia (S, M, L, XL),
  * categoria (A, B, C), booleano (vero, falso).</p>
  * 
- * @author [Il tuo nome]
- * @version 1.0
  * @see Attribute
  * @see DiscreteItem
  */
@@ -42,7 +41,7 @@ public class DiscreteAttribute extends Attribute implements Iterable<String> {
      * @param index l'indice numerico dell'attributo nello schema del dataset
      * @param values un {@link TreeSet} contenente i valori distinti che l'attributo può assumere
      */
-    public DiscreteAttribute(String name, int index, TreeSet<String> values) {
+    DiscreteAttribute(String name, int index, TreeSet<String> values) {
         super(name, index);
         this.values = values;
     }
@@ -55,7 +54,7 @@ public class DiscreteAttribute extends Attribute implements Iterable<String> {
      * 
      * @return il numero di valori distinti (cardinalità dell'attributo)
      */
-    public int getNumberOfDistinctValues() {
+    int getNumberOfDistinctValues() {
         return values.size();
     }
 

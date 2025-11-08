@@ -14,8 +14,6 @@ package data;
  * <p>Essendo un'eccezione controllata (extends {@link Exception}), deve essere
  * dichiarata nel metodo che la può sollevare o gestita con un blocco try-catch.</p>
  * 
- * @author [Il tuo nome]
- * @version 1.0
  * @see Data
  */
 public class EmptyDatasetException extends Exception {

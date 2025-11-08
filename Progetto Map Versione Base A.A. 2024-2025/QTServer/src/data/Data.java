@@ -2,7 +2,6 @@ package data;
 
 import java.sql.SQLException;
 import java.util.*;
-
 import database.DatabaseConnectionException;
 import database.DbAccess;
 import database.Example;
@@ -32,8 +31,6 @@ import database.QUERY_TYPE;
  * </ul>
  * </p>
  * 
- * @author [Il tuo nome]
- * @version 1.0
  * @see Tuple
  * @see Attribute
  * @see Example
@@ -261,7 +258,7 @@ public class Data {
      */
     public static void main(String args[]) {
         try {
-            Data trainingSet = new Data("your_table_name_here");
+            Data trainingSet = new Data("nome tabella");
             System.out.println(trainingSet);
         } catch(EmptyDatasetException e) {
             System.out.println(e.getMessage());

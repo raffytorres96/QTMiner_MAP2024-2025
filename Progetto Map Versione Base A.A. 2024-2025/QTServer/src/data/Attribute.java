@@ -1,4 +1,5 @@
 package data;
+
 import java.io.Serializable;
 
 /**
@@ -10,7 +11,7 @@ import java.io.Serializable;
  * ({@link ContinuousAttribute}) e attributi discreti ({@link DiscreteAttribute}).</p>
  * 
  * <p>Implementa {@link Serializable} per permettere la serializzazione degli attributi.</p>
- *
+ * 
  * @see ContinuousAttribute
  * @see DiscreteAttribute
  */

@@ -17,8 +17,6 @@ import java.io.Serializable;
  * <p>Implementa {@link Serializable} per permettere la serializzazione degli item,
  * necessaria per salvare tuple e cluster su file.</p>
  * 
- * @author [Il tuo nome]
- * @version 1.0
  * @see ContinuousItem
  * @see DiscreteItem
  * @see Attribute
@@ -54,7 +52,7 @@ public abstract class Item implements Serializable {
      * 
      * @return l'attributo dell'item
      */
-    public Attribute getAttribute() {
+    Attribute getAttribute() {
         return attribute;
     }
 
@@ -63,7 +61,7 @@ public abstract class Item implements Serializable {
      * 
      * @return il valore dell'item (può essere Double, String, o altro tipo appropriato)
      */
-    public Object getValue() {
+    Object getValue() {
         return value;
     }
 
@@ -91,5 +89,5 @@ public abstract class Item implements Serializable {
      * @param a l'oggetto con cui calcolare la distanza
      * @return la distanza tra l'item corrente e l'oggetto specificato
      */
-    public abstract double distance(Object a);
+    abstract double distance(Object a);
 }

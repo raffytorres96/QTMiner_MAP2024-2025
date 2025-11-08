@@ -10,8 +10,6 @@ package data;
  * i valori in un intervallo standardizzato [0, 1], utile per calcoli di distanza
  * e algoritmi di clustering.</p>
  * 
- * @author [Il tuo nome]
- * @version 1.0
  * @see Attribute
  * @see ContinuousItem
  */
@@ -36,7 +34,7 @@ public class ContinuousAttribute extends Attribute {
      * @param min il valore minimo che l'attributo può assumere
      * @param max il valore massimo che l'attributo può assumere
      */
-    public ContinuousAttribute(String name, int index, double min, double max) {
+    ContinuousAttribute(String name, int index, double min, double max) {
         super(name, index);
         this.min = min;
         this.max = max;
@@ -54,7 +52,7 @@ public class ContinuousAttribute extends Attribute {
      *         e 1 corrisponde a max
      * @throws ArithmeticException se max = min (divisione per zero)
      */
-    protected double getScaledValue(double v) {
+    double getScaledValue(double v) {
         return (v - min) / (max - min);
     }
 }

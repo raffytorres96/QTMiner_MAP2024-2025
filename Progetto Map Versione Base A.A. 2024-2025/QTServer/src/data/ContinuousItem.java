@@ -9,8 +9,6 @@ package data;
  * utilizzando il valore assoluto della differenza tra i valori scalati
  * (normalizzati) degli attributi.</p>
  * 
- * @author [Il tuo nome]
- * @version 1.0
  * @see Item
  * @see ContinuousAttribute
  */
@@ -23,7 +21,7 @@ public class ContinuousItem extends Item {
      * @param attribute l'attributo continuo associato all'item (deve essere un'istanza di {@link ContinuousAttribute})
      * @param value il valore numerico continuo dell'item
      */
-    public ContinuousItem(Attribute attribute, Double value) {
+    ContinuousItem(Attribute attribute, Double value) {
         super(attribute, value);
     }
 
