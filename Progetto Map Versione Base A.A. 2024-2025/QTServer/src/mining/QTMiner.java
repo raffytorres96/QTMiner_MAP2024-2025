@@ -130,6 +130,10 @@ public class QTMiner implements Serializable {
             // 1. Costruisce il cluster candidato più popoloso
             Cluster c = buildCandidateCluster(data, isClustered);
             
+            if (c == null || c.getSize() == 0) {
+                break;
+            }
+            
             C.add(c);
             numclusters++;
             
