@@ -41,7 +41,7 @@ public class ContinuousItem extends Item {
      * @throws ClassCastException se l'attributo non è di tipo {@link ContinuousAttribute}
      *                            o se il parametro non è convertibile a {@link Double}
      */
-    public double distance(Object a) {
+    double distance(Object a) {
         ContinuousAttribute attr = (ContinuousAttribute) getAttribute();
         double scaledThis = attr.getScaledValue((Double) getValue());
         double scaledOther = attr.getScaledValue((Double) a);
