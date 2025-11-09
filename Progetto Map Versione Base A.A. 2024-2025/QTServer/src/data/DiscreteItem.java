@@ -42,7 +42,7 @@ public class DiscreteItem extends Item {
      * @param a l'oggetto con cui confrontare il valore (deve essere compatibile con il tipo del valore dell'item)
      * @return 0.0 se i valori sono uguali, 1.0 altrimenti
      */
-    public double distance(Object a) {
+    double distance(Object a) {
         if (getValue().equals(a)) {
             return 0.0;
         } else {
