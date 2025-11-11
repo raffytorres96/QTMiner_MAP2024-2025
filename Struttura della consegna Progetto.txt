@@ -4,4 +4,10 @@ STRUTTURA DELLA CONSEGNA
 
 - Nella cartella "Progetto Map Estensione A.A. 2024-2025" sono presenti i file del progetto Android Studio, inerenti all'estensione mobile.
 
-- Nella cartella Report sono presenti i file JavaDoc, gli eseguibili (.jar e .apk), il file d'avvio 'start.bat', le immagini relative ai grafici UML e il Manuale Utente.
+- Nella cartella report sono presenti i file dei JavaDoc, le immagini relative ai grafici UML, il pdf contenente i Casi di Test e il Manuale Utente.
+
+- Nella cartella distribution ci sono invece gli eseguibili (.jar e .apk) e il file d'avvio 'start.bat'.
+
+Autori: GATTA RAFFAELE mat.746397
+	LASTELLA NICOLA mat.776814
+	CARBONE GIUSEPPE EMANUELE matr.758282
