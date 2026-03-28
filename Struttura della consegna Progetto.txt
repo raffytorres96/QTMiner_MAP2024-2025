@@ -8,6 +8,4 @@ STRUTTURA DELLA CONSEGNA
 
 - Nella cartella distribution ci sono invece gli eseguibili (.jar e .apk) e il file d'avvio 'start.bat'.
 
-Autori: GATTA RAFFAELE mat.746397
-	LASTELLA NICOLA mat.776814
-	CARBONE GIUSEPPE EMANUELE matr.758282
+Autore: GATTA RAFFAELE
