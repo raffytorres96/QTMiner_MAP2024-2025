@@ -278,9 +278,7 @@ To verify the full pipeline end-to-end:
 
 ## 👥 Authors
 
-| Name | Role |
-|---|---|
-| **Raffaele Gatta** | Development |
+**Raffaele Gatta** Computer Science Graduate — University of Bari, Thesis: BPM + RPA + AI Integration
 
 **Course:** Metodi Avanzati di Programmazione — University of Bari
 **Supervisor:** Prof. A. Appice
